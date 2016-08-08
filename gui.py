@@ -68,14 +68,18 @@ pygame.mixer.init()
 audioClip = ""
 audioVolume = 0
 
-goodEvent = True
+#1080p Resolution - all other resolutions are scaled.
+bigfont = pygame.font.SysFont("monospace bold", 75)
+font = pygame.font.SysFont("monospace bold", 50)
+tinyfont = pygame.font.SysFont("monospace", 20)
 txtWidth = 320
+menuTitle = 132
 menuX = 1791
 menuY = 600
-bigfont = pygame.font.SysFont("monospace bold", 35)
-font = pygame.font.SysFont("monospace bold", 20)
-tinyfont = pygame.font.SysFont("monospace", 10)
-menuTitle = 200
+imgX = 569
+imgY = 231
+imgBigX = 569
+imgBigY = 673
 bgImg = pygame.image.load("bg.png")
 fgImg = pygame.image.load("fg.png")
 gameImg = pygame.image.load("blank.png")
@@ -84,13 +88,8 @@ wheelCoverImg = pygame.image.load("wheel.png")
 wheelBGImg = pygame.image.load("wheelBG.png")
 wheelFGImg = pygame.image.load("wheelFG.png")
 
-imgX = 10
-imgY = 20
-imgBigX = 10
-imgBigY = 20
 past = [0 for x in range(0,wheelDepth)]
 futr = [0 for x in range(0,wheelDepth)]
-
 
 FPS = 60
 fpsClock = pygame.time.Clock()
@@ -102,12 +101,14 @@ try:
 except:
     windowHeight = info.current_h
     windowWidth = info.current_w
-#Base resolution is 1080P - everything else is scaled
+    
+#determine scale from 1080p base
 scaleX = float(1920)/windowWidth
 scaleY = float(1080)/windowHeight
 #resize elements
 bgImg = pygame.transform.scale(bgImg, (windowWidth, windowHeight))
 fgImg = pygame.transform.scale(fgImg, (windowWidth, windowHeight))
+
 if(windowHeight!=1080):
     wheelCoverImg = pygame.transform.scale(wheelCoverImg, (int(wheelCoverImg.get_rect().width/scaleX),int(wheelCoverImg.get_rect().height/scaleY)))
     wheelBGImg = pygame.transform.scale(wheelBGImg, (int(wheelBGImg.get_rect().width/scaleX), int(wheelBGImg.get_rect().height/scaleY)))
@@ -117,42 +118,18 @@ if(debug):
     print("Resolution: " + str(windowWidth) + "x" + str(windowHeight))
 
 #adjustments for common HDTV resolutions
-if(windowHeight==1080):
-    bigfont = pygame.font.SysFont("monospace bold", 75)
-    font = pygame.font.SysFont("monospace bold", 50)
-    tinyfont = pygame.font.SysFont("monospace", 20)
-    txtWidth = 320
-    menuTitle = 120
-    menuX = 1791
-    menuY = 600
-    imgX = 569
-    imgY = 231
-    imgBigX = 569
-    imgBigY = 675
-# elif(windowHeight==720):
-    # bigfont = pygame.font.SysFont("monospace bold", 50)
-    # font = pygame.font.SysFont("monospace bold", 33)
-    # tinyfont = pygame.font.SysFont("monospace", 20)
-    # txtWidth = 320/1.5
-    # menuTitle = 60
-    # menuX = 1791/1.5
-    # menuY = 600/1.5
-    # imgX = 569/1.5
-    # imgY = 231/1.5
-    # imgBigX = 569/1.5
-    # imgBigY = 675/1.5
-else:
+if(windowHeight!=1080):
     bigfont = pygame.font.SysFont("monospace bold", int(75/scaleX))
     font = pygame.font.SysFont("monospace bold", int(50/scaleX))
     tinyfont = pygame.font.SysFont("monospace", int(20/scaleX))
-    txtWidth = 320/scaleX
-    menuTitle = 60
-    menuX = 1791/scaleX
-    menuY = 600/scaleY
-    imgX = 569/scaleX
-    imgY = 231/scaleY
-    imgBigX = 569/scaleX
-    imgBigY = 675/scaleY
+    txtWidth = txtWidth/scaleX
+    menuTitle = menuTitle/scaleY
+    menuX = menuX/scaleX
+    menuY = menuY/scaleY
+    imgX = imgX/scaleX
+    imgY = imgY/scaleY
+    imgBigX = imgBigX/scaleX
+    imgBigY = imgBigY/scaleY
 lblChoosen = bigfont.render("", 1, (255,255,255))
 systemTitle = bigfont.render(systems[systemID][0], 1, (255,255,255))
 lblCommand = font.render("", 1, (255,255,255))
@@ -172,9 +149,9 @@ def frange(start, stop, step):
 def resizeImages():
     global gameBigImg, gameImg
     height = 222/scaleY
-    width = 853/scaleX
+    width = 854/scaleX
     bigHeight = 569/scaleY
-    bigWidth = 853/scaleX
+    bigWidth = 854/scaleX
     if((float(gameImg.get_rect().height)/gameImg.get_rect().width) > (height/width)): #too tall
         calcHeight = ((gameImg.get_rect().height * width)/(gameImg.get_rect().width))
         gameImg = pygame.transform.scale(gameImg, (int(width), int(calcHeight)))
@@ -229,7 +206,7 @@ def launchGame():
     #pygame.event.pump() #tell event that "you're still here"
     pygame.event.clear() #clear out all button pushes
     time.sleep(1.5) # give time to recover
-    screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN)
+    screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
     pygame.event.set_grab(True)
     fillWheel()
     resizeImages()
@@ -273,7 +250,7 @@ def animateWheel(dir):
     while not done:
         #menuY = menuY + (dir * -3.5)
         if(windowWidth==1080):
-            menuY = menuY + (dir * -10)
+            menuY = menuY + (dir * -5.25)
         else:
             menuY = menuY + (dir * -3.5)
         
@@ -290,11 +267,12 @@ def animateWheel(dir):
         #    screen.blit(futr[x], (((menuX-txtWidth)-futr[x].get_rect().centerx), (menuY)+((x+1)*menuSpacing)))
 
         if(windowHeight==1080):
+            test=1
             screen.blit(wheelCoverImg, (1142,268))
-            screen.blit(wheelFGImg, (1104,72))
+            #screen.blit(wheelFGImg, (1104,72))
         else:
             screen.blit(wheelCoverImg, (int(1142/scaleX),int(268/scaleY)))
-            screen.blit(wheelFGImg, (int(1104/scaleX),int(72/scaleY)))
+            #screen.blit(wheelFGImg, (int(1104/scaleX),int(72/scaleY)))
         
         if(dir < 0):
             if(menuY >= oldMenuY + menuSpacing):
@@ -304,7 +282,7 @@ def animateWheel(dir):
             if(menuY <= oldMenuY - menuSpacing):
                 done = True
                 menuY = oldMenuY
-        pygame.display.update()
+        pygame.display.update((int(1148/scaleX),int(274/scaleY),int((wheelCoverImg.get_rect().width-16)), int((wheelCoverImg.get_rect().height-24))))
         fpsClock.tick(FPS)
     pygame.event.clear()
 
@@ -367,7 +345,6 @@ def fillWheel():
 def drawMenu(type):
     if type == "wheel":
         global screen
-        screen.blit(systemTitle, (menuX+(txtWidth-systemTitle.get_rect().centerx), (menuTitle)))
         screen.blit(lblChoosen, (((menuX-txtWidth)-lblChoosen.get_rect().centerx), menuY))
         for x in range(0,len(past)):
             screen.blit(past[x], (((menuX-txtWidth)-past[x].get_rect().centerx), (menuY)-((x+1)*menuSpacing)))
@@ -390,7 +367,8 @@ def drawScreen():
     #screen.blit(wheelCoverImg, (1000,100))
     screen.blit(fgImg, (0,0))
     screen.blit(lblCommand, (10,windowHeight-25))
-    pygame.display.update()
+    screen.blit(systemTitle, (((menuX-txtWidth)-systemTitle.get_rect().centerx), (menuTitle)))
+    pygame.display.flip()
     
         
 def fadeIn(step, max):
