@@ -386,11 +386,7 @@ while True:
     if(goodEvent):
         evtCount += 1
         resizeImages()
-        #wheelCoverImg = pygame.transform.scale(wheelCoverImg, (800, 800))
         drawScreen()
-        #if goodEvent:
-        #if games[gameID[systemID]][0] == "mk3":
-        #    loadMovie("capture.mpg")
         #print time.strftime("%H:%M:%S")
 
     fpsClock.tick(FPS)
