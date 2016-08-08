@@ -1,0 +1,4 @@
+"MAME","mame -mt ","mame.png"
+"Steam","steam -","tenfoot.png"
+"Genesis","mess genesis -mt -cart ./roms/Genesis/","genesis.jpg"
+"Nintendo","mess nes -mt -cart ./roms/Nintendo/","nes.png"

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+    <resolution value="auto">
+        <width>1280</width>
+        <height>720</height>
+    </resolution>
+    <audio volume="0.5" />
+    <childlock value="" />
+    <wheel value="7" />
+    <debug value="true" />
+</settings>
