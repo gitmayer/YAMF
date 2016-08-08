@@ -18,7 +18,10 @@ settings = {"path":u"C:/SykoGame",
             "childlock":False,
             "wheel":7,
             "debug":False}
-
+            
+newpath = settings["path"]
+oldpath = os.getcwd()
+os.chdir(newpath)
 try:
     xmldoc = minidom.parse('settings.xml')
     settings["resolution"] = xmldoc.getElementsByTagName('resolution')[0].attributes['value'].value
@@ -39,10 +42,7 @@ if(settings["resolution"]!='auto'): #display resolution overrride
     windowHeight = settings["height"]
     windowWidth = settings["width"]
 debug = settings["debug"]
-    
-newpath = settings["path"]
-oldpath = os.getcwd()
-os.chdir(newpath)
+
 
 systemID = 0
 #gameID = 0
@@ -171,70 +171,29 @@ def frange(start, stop, step):
 
 def resizeImages():
     global gameBigImg, gameImg
-    height = 222
-    width = 853
-    bigHeight = 569
-    bigWidth = 853
-    if(windowHeight==1080):
-        if((float(gameImg.get_rect().height)/gameImg.get_rect().width) > (float(222)/853)): #too tall
-            calcHeight = ((gameImg.get_rect().height * 853)/(gameImg.get_rect().width))
-            gameImg = pygame.transform.scale(gameImg, (853, calcHeight))
-        else: #too wide
-            calcWidth = ((gameImg.get_rect().width * 222/gameImg.get_rect().height))
-            gameImg = pygame.transform.scale(gameImg, (calcWidth, 222))
-        if((float(gameBigImg.get_rect().height)/gameBigImg.get_rect().width) > (float(569)/853)): #too tall
-            calcHeight = ((gameBigImg.get_rect().height * 853)/(gameBigImg.get_rect().width))
-            gameBigImg = pygame.transform.scale(gameBigImg, (853, calcHeight))
-        else:
-            calcWidth = ((gameBigImg.get_rect().width * 569/gameBigImg.get_rect().height))
-            gameBigImg = pygame.transform.scale(gameBigImg, (calcWidth, 569))
-    else:
-        if((float(gameImg.get_rect().height)/gameImg.get_rect().width) > (float(height/scaleX)/(width/scaleY))): #too tall
-            calcHeight = ((gameImg.get_rect().height * (width/scaleY))/(gameImg.get_rect().width))
-            gameImg = pygame.transform.scale(gameImg, (int(width/scaleY), int(calcHeight)))
-        else: #too wide
-            calcWidth = ((gameImg.get_rect().width * height/scaleX/gameImg.get_rect().height))
-            gameImg = pygame.transform.scale(gameImg, (int(calcWidth), int(height/scaleX)))
-        if((float(gameBigImg.get_rect().height)/gameBigImg.get_rect().width) > (float(bigHeight/scaleX)/(bigWidth/scaleY))): #too tall
-            calcHeight = ((gameBigImg.get_rect().height * (bigWidth/scaleY))/(gameBigImg.get_rect().width))
-            gameBigImg = pygame.transform.scale(gameBigImg, (int(bigWidth/scaleY), int(calcHeight)))
-        else:
-            calcWidth = ((gameBigImg.get_rect().width * (bigHeight/scaleX)/gameBigImg.get_rect().height))
-            gameBigImg = pygame.transform.scale(gameBigImg, (int(calcWidth), int(bigHeight/scaleX)))
-        
+    height = 222/scaleY
+    width = 853/scaleX
+    bigHeight = 569/scaleY
+    bigWidth = 853/scaleX
+    if((float(gameImg.get_rect().height)/gameImg.get_rect().width) > (height/width)): #too tall
+        calcHeight = ((gameImg.get_rect().height * width)/(gameImg.get_rect().width))
+        gameImg = pygame.transform.scale(gameImg, (int(width), int(calcHeight)))
+    else: #too wide
+        calcWidth = ((gameImg.get_rect().width * height/gameImg.get_rect().height))
+        gameImg = pygame.transform.scale(gameImg, (int(calcWidth), int(height)))
+    if((float(gameBigImg.get_rect().height)/gameBigImg.get_rect().width) > (float(bigHeight)/bigWidth)): #too tall
+        calcHeight = ((gameBigImg.get_rect().height * bigWidth)/(gameBigImg.get_rect().width))
+        gameBigImg = pygame.transform.scale(gameBigImg, (int(bigWidth), int(calcHeight)))
+    else: #too wide
+        calcWidth = ((gameBigImg.get_rect().width * bigHeight/gameBigImg.get_rect().height))
+        gameBigImg = pygame.transform.scale(gameBigImg, (int(calcWidth), int(bigHeight)))
+    
 def quitOut():
     if(debug):
         print "DONE: " + str(evtCount) + " Events Total"
     os.chdir(newpath)
     pygame.quit()
     sys.exit()
-
-def loadMovie(filepath):
-    global movie
-    #pygame.init()
-    pygame.mixer.quit()
-    pygame.display.init()
-
-    f = BytesIO(open(filepath, 'rb').read())
-    movie = pygame.movie.Movie(f)
-    #w, h = movie.get_size()
-    #w = int(w * 1.3 + 0.5)
-    #h = int(h * 1.3 + 0.5)
-    w = 500
-    h = 350
-    cenVid = windowHeight - gameImg.get_rect().height - h
-    wsize = (w+10, h+10)
-    msize = (w, h)
-    #screen = pygame.display.set_mode(wsize)
-    movie.set_display(screen, Rect((15, cenVid), msize))
-
-    #pygame.event.set_allowed((QUIT, KEYDOWN))
-    #pygame.time.set_timer(USEREVENT, 1000)
-    movie.play()
-    #while movie.get_busy():
-    #    evt = pygame.event.wait()
-    #    procEvents(evt)
-    #pygame.time.set_timer(USEREVENT, 0)
     
 def procEvents(evt):
     global goodEvent
