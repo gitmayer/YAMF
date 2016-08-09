@@ -138,6 +138,14 @@ systemTitle = bigfont.render(systems[systemID][0], 1, (255,255,255))
 lblCommand = font.render("", 1, (255,255,255))
 lblFPS = font.render("", 1, (255,255,255))
 #menuSpacing = font.get_linesize() + 10
+wheelBGX = int(1104/scaleX)
+wheelBGY = int(72/scaleY)
+wheelCoverX = int(1142/scaleX)
+wheelCoverY = int(268/scaleY)
+updateX = int(1148/scaleX)
+updateY = int(274/scaleY)
+updateDX = int((wheelCoverImg.get_rect().width-16))
+updateDY = int((wheelCoverImg.get_rect().height-24))
 
 screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
 pygame.display.set_caption('Sykotic Gaming')
@@ -254,15 +262,6 @@ def animateWheel(dir):
     menuStart = time.time()
     step = (menuSpacing/6)+0.0001 #exactly 6 steps
     step = (dir * -step)
-    #print("start",menuY)
-    wheelBGX = int(1104/scaleX)
-    wheelBGY = int(72/scaleY)
-    wheelCoverX = int(1142/scaleX)
-    wheelCoverY = int(268/scaleY)
-    updateX = int(1148/scaleX)
-    updateY = int(274/scaleY)
-    updateDX = int((wheelCoverImg.get_rect().width-16))
-    updateDY = int((wheelCoverImg.get_rect().height-24))
     timeStart = time.time()
     while not done:
         if(debug):
@@ -277,11 +276,9 @@ def animateWheel(dir):
         pygame.display.update(updateX,updateY,updateDX,updateDY)
         if((dir < 0) and (menuY >= (oldMenuY + menuSpacing))):
             done = True
-            #print (menuY, (oldMenuY + menuSpacing))
             menuY = oldMenuY
         elif((dir > 0) and (menuY <= (oldMenuY - menuSpacing))):
             done = True
-            #print (menuY, (oldMenuY - menuSpacing))
             menuY = oldMenuY
         fpsClock.tick(FPS)
         if(debug):
@@ -416,7 +413,6 @@ while True:
         evtCount += 1
         resizeImages()
         drawScreen()
-        #print time.strftime("%H:%M:%S")
 
     fpsClock.tick(FPS)
     
