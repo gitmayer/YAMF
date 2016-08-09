@@ -9,6 +9,7 @@ Menu system, animation and sound.  All visuals dependant on assests and comma se
 Developement in Progress
 ---
 Asset scraping and ROM discovery
+
 Options menu for user settings
 
 Links
@@ -18,4 +19,5 @@ Python 2.7 (https://www.python.org/downloads/)
 Pygame (http://pygame.org/download.shtml)
 
 MAME / MESS (http://mamedev.org/release.html)
+
 Steam (http://store.steampowered.com/about/)
