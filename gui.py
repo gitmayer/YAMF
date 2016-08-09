@@ -255,20 +255,13 @@ def changeGame(dir):
     fillWheel()
     
 def animateWheel(dir):
-    global menuY, actualFPS
+    global menuY
     oldMenuY = menuY
     done = False
-    #menuY = oldMenuY + 0
-    menuStart = time.time()
     step = (menuSpacing/6)+0.0001 #exactly 6 steps
     step = (dir * -step)
-    timeStart = time.time()
-    while not done:
-        if(debug):
-            timeStop = time.time()
-            if((timeStop - timeStart)!=0):
-                actualFPS = int((actualFPS + (60/((timeStop - timeStart)/0.016666667)))/2)
-            timeStart = time.time()
+    #while not done:
+    if not done:
         menuY = menuY + step
         screen.blit(wheelBGImg, (wheelBGX,wheelBGY))
         drawMenu("wheel")
@@ -280,14 +273,7 @@ def animateWheel(dir):
         elif((dir > 0) and (menuY <= (oldMenuY - menuSpacing))):
             done = True
             menuY = oldMenuY
-        fpsClock.tick(FPS)
-        if(debug):
-            lblFPS = tinyfont.render(str(actualFPS) + " fps", 1, (255,255,255))
-            screen.fill((0,0,0), (9,windowHeight-49,80,20))
-            screen.blit(lblFPS, (10,windowHeight-50))
-            pygame.display.update(9,windowHeight-49,80,20)
-    menuStop = time.time()
-    actualFPS = int((menuStop - menuStart)*6*60)
+        #fpsClock.tick(FPS)
     pygame.event.clear()
 
 def fillWheel():
