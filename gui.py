@@ -221,7 +221,7 @@ def launchGame():
     time.sleep(1.5) # give time to recover
     screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
     pygame.event.set_grab(True)
-    fillWheel()
+    fillWheel(True)
     resizeImages()
     drawScreen()
     
@@ -243,16 +243,16 @@ def changeSystem(dir):
             else:
                 games.append(row)
     #gameID = 0
-    fillWheel()
+    fillWheel(True)
 
 def changeGame(dir):
     global gameID, animateDone, direction, menuY, oldMenuY
     if not animateDone:
         menuY = oldMenuY #reset center
-        fillWheel() #load the last selection before more animation
+        fillWheel(False) #load the last selection before more animation
         drawMenu("wheel") #draw the new wheel entries
-        resizeImages()
-        drawScreen()
+        #resizeImages()
+        #drawScreen()
     else:
         animateDone = False
     gameID[systemID] = gameID[systemID] + (1*dir)
@@ -277,17 +277,40 @@ def animateWheel(dir):
     if((dir < 0) and (menuY >= (oldMenuY + menuSpacing))) or ((dir > 0) and (menuY <= (oldMenuY - menuSpacing))):
         animateDone = True
         menuY = oldMenuY
-        fillWheel()
+        fillWheel(True)
         drawMenu("wheel")
         resizeImages()
         drawScreen()
 
-def fillWheel():
-    global gameBigImg, gameImg, lblChoosen, lblCommand
+def fillWheel(assests):
+    global lblChoosen, lblCommand
     global past, futr
-    global audioClip, audioVolume
-    audioClip = systems[systemID][0] + "/" + games[gameID[systemID]][0] + ".mp3"
     lblCommand = tinyfont.render("Command: " + systems[systemID][1] + games[gameID[systemID]][0], 1, (255,255,255))
+    p = gameID[systemID]
+    f = gameID[systemID]
+    lblChoosen = font.render(games[gameID[systemID]][1][0:30], 1, (255,255,255))
+    for x in range(0,len(past)):
+        p -= 1
+        f += 1
+        if p < 0:
+            p = len(games)-1
+        elif p > len(games)-1:
+            p = 0
+        if f < 0:
+            f = len(games)-1
+        elif f > len(games)-1:
+            f = 0
+        #a = ((x+1)*25)
+        #past[x] = font.render(games[p][1], 1, (180-a,180-a,180-a))
+        #futr[x] = font.render(games[f][1], 1, (180-a,180-a,180-a))
+        past[x] = font.render(games[p][1][0:30], 1, (255,255,255))
+        futr[x] = font.render(games[f][1][0:30], 1, (255,255,255))
+    if assests:
+        loadAssests()
+    
+def loadAssests():
+    global audioClip, audioVolume, gameBigImg, gameImg
+    audioClip = systems[systemID][0] + "/" + games[gameID[systemID]][0] + ".mp3"
     try:
         gameImg = pygame.image.load(systems[systemID][0] + "/" + games[gameID[systemID]][0] + ".png")
     except:
@@ -318,26 +341,7 @@ def fillWheel():
         print("error loading audio file", audioClip)
         audioVolume = 0
         #pygame.mixer.music.load("blank.mp3")
-    p = gameID[systemID]
-    f = gameID[systemID]
-    lblChoosen = font.render(games[gameID[systemID]][1][0:30], 1, (255,255,255))
-    for x in range(0,len(past)):
-        p -= 1
-        f += 1
-        if p < 0:
-            p = len(games)-1
-        elif p > len(games)-1:
-            p = 0
-        if f < 0:
-            f = len(games)-1
-        elif f > len(games)-1:
-            f = 0
-        #a = ((x+1)*25)
-        #past[x] = font.render(games[p][1], 1, (180-a,180-a,180-a))
-        #futr[x] = font.render(games[f][1], 1, (180-a,180-a,180-a))
-        past[x] = font.render(games[p][1][0:30], 1, (255,255,255))
-        futr[x] = font.render(games[f][1][0:30], 1, (255,255,255))
-    
+
 def drawMenu(type):
     if type == "wheel":
         global screen
@@ -378,7 +382,7 @@ def fadeIn(step, max):
         #time.sleep(0.1)
         fadeStep = time.time()
         
-fillWheel() # fill wheel with games
+fillWheel(True) # fill wheel with games
 evtCount = 0
 resizeImages()
 drawScreen()
