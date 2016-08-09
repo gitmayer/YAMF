@@ -67,8 +67,9 @@ pygame.init()
 pygame.mixer.init()
 audioClip = ""
 audioVolume = 0
+actualFPS = 0
 
-#1080p Resolution - all other resolutions are scaled.
+#1080p Resolution - all other resolutions are scaled from this
 bigfont = pygame.font.SysFont("monospace bold", 75)
 font = pygame.font.SysFont("monospace bold", 50)
 tinyfont = pygame.font.SysFont("monospace", 20)
@@ -80,6 +81,7 @@ imgX = 569
 imgY = 231
 imgBigX = 569
 imgBigY = 673
+menuSpacing = font.get_linesize() + 10
 bgImg = pygame.image.load("bg.png")
 fgImg = pygame.image.load("fg.png")
 gameImg = pygame.image.load("blank.png")
@@ -117,7 +119,7 @@ if(windowHeight!=1080):
 if(debug):
     print("Resolution: " + str(windowWidth) + "x" + str(windowHeight))
 
-#adjustments for common HDTV resolutions
+#adjustments for other resolutions
 if(windowHeight!=1080):
     bigfont = pygame.font.SysFont("monospace bold", int(75/scaleX))
     font = pygame.font.SysFont("monospace bold", int(50/scaleX))
@@ -130,10 +132,12 @@ if(windowHeight!=1080):
     imgY = imgY/scaleY
     imgBigX = imgBigX/scaleX
     imgBigY = imgBigY/scaleY
+    menuSpacing = menuSpacing/scaleY
 lblChoosen = bigfont.render("", 1, (255,255,255))
 systemTitle = bigfont.render(systems[systemID][0], 1, (255,255,255))
 lblCommand = font.render("", 1, (255,255,255))
-menuSpacing = font.get_linesize() + 10
+lblFPS = font.render("", 1, (255,255,255))
+#menuSpacing = font.get_linesize() + 10
 
 screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
 pygame.display.set_caption('Sykotic Gaming')
@@ -243,47 +247,50 @@ def changeGame(dir):
     fillWheel()
     
 def animateWheel(dir):
-    global menuY
+    global menuY, actualFPS
     oldMenuY = menuY
     done = False
-    menuY = oldMenuY + 0
+    #menuY = oldMenuY + 0
+    menuStart = time.time()
+    step = (menuSpacing/6)+0.0001 #exactly 6 steps
+    step = (dir * -step)
+    #print("start",menuY)
+    wheelBGX = int(1104/scaleX)
+    wheelBGY = int(72/scaleY)
+    wheelCoverX = int(1142/scaleX)
+    wheelCoverY = int(268/scaleY)
+    updateX = int(1148/scaleX)
+    updateY = int(274/scaleY)
+    updateDX = int((wheelCoverImg.get_rect().width-16))
+    updateDY = int((wheelCoverImg.get_rect().height-24))
+    timeStart = time.time()
     while not done:
-        #menuY = menuY + (dir * -3.5)
-        if(windowWidth==1080):
-            menuY = menuY + (dir * -5.25)
-        else:
-            menuY = menuY + (dir * -3.5)
-        
-        #drawScreen()
-        if(windowHeight==1080):
-            screen.blit(wheelBGImg, (1104,72))
-        else:
-            screen.blit(wheelBGImg, (int(1104/scaleX),int(72/scaleY)))
-        #wheel
+        if(debug):
+            timeStop = time.time()
+            if((timeStop - timeStart)!=0):
+                actualFPS = int((actualFPS + (60/((timeStop - timeStart)/0.016666667)))/2)
+            timeStart = time.time()
+        menuY = menuY + step
+        screen.blit(wheelBGImg, (wheelBGX,wheelBGY))
         drawMenu("wheel")
-        #screen.blit(lblChoosen, (((menuX-txtWidth)-lblChoosen.get_rect().centerx), menuY))
-        #for x in range(0,len(past)):
-        #    screen.blit(past[x], (((menuX-txtWidth)-past[x].get_rect().centerx), (menuY)-((x+1)*menuSpacing)))
-        #    screen.blit(futr[x], (((menuX-txtWidth)-futr[x].get_rect().centerx), (menuY)+((x+1)*menuSpacing)))
-
-        if(windowHeight==1080):
-            test=1
-            screen.blit(wheelCoverImg, (1142,268))
-            #screen.blit(wheelFGImg, (1104,72))
-        else:
-            screen.blit(wheelCoverImg, (int(1142/scaleX),int(268/scaleY)))
-            #screen.blit(wheelFGImg, (int(1104/scaleX),int(72/scaleY)))
-        
-        if(dir < 0):
-            if(menuY >= oldMenuY + menuSpacing):
-                done = True
-                menuY = oldMenuY
-        else:
-            if(menuY <= oldMenuY - menuSpacing):
-                done = True
-                menuY = oldMenuY
-        pygame.display.update((int(1148/scaleX),int(274/scaleY),int((wheelCoverImg.get_rect().width-16)), int((wheelCoverImg.get_rect().height-24))))
+        screen.blit(wheelCoverImg, (wheelCoverX,wheelCoverY))
+        pygame.display.update(updateX,updateY,updateDX,updateDY)
+        if((dir < 0) and (menuY >= (oldMenuY + menuSpacing))):
+            done = True
+            #print (menuY, (oldMenuY + menuSpacing))
+            menuY = oldMenuY
+        elif((dir > 0) and (menuY <= (oldMenuY - menuSpacing))):
+            done = True
+            #print (menuY, (oldMenuY - menuSpacing))
+            menuY = oldMenuY
         fpsClock.tick(FPS)
+        if(debug):
+            lblFPS = tinyfont.render(str(actualFPS) + " fps", 1, (255,255,255))
+            screen.fill((0,0,0), (9,windowHeight-49,80,20))
+            screen.blit(lblFPS, (10,windowHeight-50))
+            pygame.display.update(9,windowHeight-49,80,20)
+    menuStop = time.time()
+    actualFPS = int((menuStop - menuStart)*6*60)
     pygame.event.clear()
 
 def fillWheel():
@@ -364,32 +371,46 @@ def drawScreen():
         screen.blit(wheelCoverImg, (1142,268))
     else:
         screen.blit(wheelCoverImg, (1142/scaleX,268/scaleY))
+    screen.blit(lblChoosen, (((menuX-txtWidth)-lblChoosen.get_rect().centerx), menuY))
     #screen.blit(wheelCoverImg, (1000,100))
     screen.blit(fgImg, (0,0))
-    screen.blit(lblCommand, (10,windowHeight-25))
+    if(debug):
+        screen.blit(lblCommand, (10,windowHeight-25))
     screen.blit(systemTitle, (((menuX-txtWidth)-systemTitle.get_rect().centerx), (menuTitle)))
     pygame.display.flip()
     
-        
+fadeStep = time.time()    
 def fadeIn(step, max):
-    global audioVolume
-    if(pygame.mixer.music.get_busy()):
-        audioVolume = audioVolume + step
-        if(audioVolume<=max):
-            pygame.mixer.music.set_volume(audioVolume)
-            time.sleep(0.1)
+    global audioVolume, fadeStep
+    #if(pygame.mixer.music.get_busy()):
+    audioVolume = audioVolume + step
+    if(audioVolume<=max):
+        pygame.mixer.music.set_volume(audioVolume)
+        #time.sleep(0.1)
+        fadeStep = time.time()
         
 fillWheel() # fill wheel with games
 evtCount = 0
 resizeImages()
 drawScreen()
 pygame.event.set_grab(True)
+timeStart = time.time()
 while True:
-
+    if(debug):
+        timeStop = time.time()
+        if((timeStop - timeStart)!=0):
+            actualFPS = int((actualFPS + (60/((timeStop - timeStart)/0.016666667)))/2)
+        timeStart = time.time()
+    
     event = pygame.event.poll()
     procEvents(event)
+    
+    #if(animate):
+    #    animateWheel()
+    
     if(audioVolume!=0 and audioVolume!=audioMax):
-        fadeIn((audioMax/50), audioMax)
+        if(time.time()-fadeStep >= 0.1):
+            fadeIn((audioMax/50), audioMax)
     
     if(goodEvent):
         evtCount += 1
@@ -399,3 +420,8 @@ while True:
 
     fpsClock.tick(FPS)
     
+    if(debug):
+        lblFPS = tinyfont.render(str(actualFPS) + " fps", 1, (255,255,255))
+        screen.fill((0,0,0), (9,windowHeight-49,80,20))
+        screen.blit(lblFPS, (10,windowHeight-50))
+        pygame.display.update(9,windowHeight-49,80,20)

@@ -7,5 +7,5 @@
     <audio volume="0.5" />
     <childlock value="" />
     <wheel value="7" />
-    <debug value="true" />
+    <debug value="" />
 </settings>
