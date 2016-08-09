@@ -89,6 +89,7 @@ gameBigImg = pygame.image.load("blank.png")
 wheelCoverImg = pygame.image.load("wheel.png")
 wheelBGImg = pygame.image.load("wheelBG.png")
 wheelFGImg = pygame.image.load("wheelFG.png")
+oldMenuY = menuY
 
 past = [0 for x in range(0,wheelDepth)]
 futr = [0 for x in range(0,wheelDepth)]
@@ -149,8 +150,8 @@ updateDY = int((wheelCoverImg.get_rect().height-24))
 
 screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
 pygame.display.set_caption('Sykotic Gaming')
-
-direction = "stop"
+animateDone = True
+direction = ""
 
 def frange(start, stop, step):
     i = start
@@ -245,36 +246,41 @@ def changeSystem(dir):
     fillWheel()
 
 def changeGame(dir):
-    global gameID
+    global gameID, animateDone, direction, menuY, oldMenuY
+    if not animateDone:
+        menuY = oldMenuY #reset center
+        fillWheel() #load the last selection before more animation
+        drawMenu("wheel") #draw the new wheel entries
+        resizeImages()
+        drawScreen()
+    else:
+        animateDone = False
     gameID[systemID] = gameID[systemID] + (1*dir)
     if gameID[systemID] > len(games)-1:
         gameID[systemID] = 0 # loop
     elif gameID[systemID] < 0:
         gameID[systemID] = len(games)-1 # loop
-    animateWheel(dir)
-    fillWheel()
-    
-def animateWheel(dir):
-    global menuY
     oldMenuY = menuY
-    done = False
+    direction = dir
+    #animateWheel(dir)
+    #fillWheel()
+
+def animateWheel(dir):
+    global menuY, animateDone
     step = (menuSpacing/6)+0.0001 #exactly 6 steps
     step = (dir * -step)
-    #while not done:
-    if not done:
-        menuY = menuY + step
-        screen.blit(wheelBGImg, (wheelBGX,wheelBGY))
+    menuY = menuY + step
+    screen.blit(wheelBGImg, (wheelBGX,wheelBGY))
+    drawMenu("wheel")
+    screen.blit(wheelCoverImg, (wheelCoverX,wheelCoverY))
+    pygame.display.update(updateX,updateY,updateDX,updateDY)
+    if((dir < 0) and (menuY >= (oldMenuY + menuSpacing))) or ((dir > 0) and (menuY <= (oldMenuY - menuSpacing))):
+        animateDone = True
+        menuY = oldMenuY
+        fillWheel()
         drawMenu("wheel")
-        screen.blit(wheelCoverImg, (wheelCoverX,wheelCoverY))
-        pygame.display.update(updateX,updateY,updateDX,updateDY)
-        if((dir < 0) and (menuY >= (oldMenuY + menuSpacing))):
-            done = True
-            menuY = oldMenuY
-        elif((dir > 0) and (menuY <= (oldMenuY - menuSpacing))):
-            done = True
-            menuY = oldMenuY
-        #fpsClock.tick(FPS)
-    pygame.event.clear()
+        resizeImages()
+        drawScreen()
 
 def fillWheel():
     global gameBigImg, gameImg, lblChoosen, lblCommand
@@ -326,7 +332,7 @@ def fillWheel():
             f = len(games)-1
         elif f > len(games)-1:
             f = 0
-        a = ((x+1)*25)
+        #a = ((x+1)*25)
         #past[x] = font.render(games[p][1], 1, (180-a,180-a,180-a))
         #futr[x] = font.render(games[f][1], 1, (180-a,180-a,180-a))
         past[x] = font.render(games[p][1][0:30], 1, (255,255,255))
@@ -388,8 +394,9 @@ while True:
     event = pygame.event.poll()
     procEvents(event)
     
-    #if(animate):
-    #    animateWheel()
+    if not animateDone:
+        #print(direction, animateDone)
+        animateWheel(direction)
     
     if(audioVolume!=0 and audioVolume!=audioMax):
         if(time.time()-fadeStep >= 0.1):
