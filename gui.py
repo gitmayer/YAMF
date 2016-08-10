@@ -33,7 +33,7 @@ try:
     settings["debug"] = bool(xmldoc.getElementsByTagName('debug')[0].attributes['value'].value)
 except:
     print("Bad settings.xml file - defaults loaded")
-    print("Run the settings configuration to rebuild the file")
+    print("Launch the options menu to rebuild the file")
 
 childLock = settings["childlock"]
 audioMax = settings["volume"]
@@ -216,7 +216,7 @@ def procEvents(evt):
         goodEvent = False
 
 def launchOptions():
-    global audioMax, audioVolume, childLock, debug
+    global audioMax, audioVolume, childLock, debug, windowWidth, windowHeight
     def procInput(evt):
         if evt.type == KEYDOWN:
             if evt.key == 111: # o key
@@ -254,12 +254,31 @@ def launchOptions():
         s3.blit(off, ((optionWidth*.66)-off.get_rect().centerx,(optionHeight*.05)+(menuSpacing*10.4),(optionWidth*.88),menuSpacing))
         
     def saveXML():
+        global windowWidth, windowHeight
         with open("settings.xml", 'w') as f:
             f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
             f.write("<settings>\n")
             f.write("\t<resolution value=\"" + resolutions[resolution] + "\">\n")
-            f.write("\t\t<width>1280</width>\n")
-            f.write("\t\t<height>720</height>\n")
+            if(resolutions[resolution]=="1080p"):
+                windowWidth = 1920
+                windowHeight = 1080
+            elif(resolutions[resolution]=="1600x900"):
+                windowWidth = 1600
+                windowHeight = 900
+            elif(resolutions[resolution]=="720p"):
+                windowWidth = 1280
+                windowHeight = 720
+            elif(resolutions[resolution]=="720x480"):
+                windowWidth = 720
+                windowHeight = 480
+            elif(resolutions[resolution]=="480p"):
+                windowWidth = 640
+                windowHeight = 480
+            else: #auto
+                windowHeight = info.current_h
+                windowWidth = info.current_w
+            f.write("\t\t<width>" + str(windowWidth) + "</width>\n")
+            f.write("\t\t<height>" + str(windowHeight) + "</height>\n")
             f.write("\t</resolution>\n")
             f.write("\t<audio volume=\"" + str(audioMax) + "\" />\n")
             if(childLock):
@@ -272,6 +291,9 @@ def launchOptions():
             else:
                 f.write("\t<debug value=\"\" />\n")
             f.write("</settings>")
+        bigfont = pygame.font.SysFont("monospace bold", int(75/scaleX))
+        font = pygame.font.SysFont("monospace bold", int(50/scaleX))
+        tinyfont = pygame.font.SysFont("monospace", int(20/scaleX))
     
     optionWidth = updateDX-100
     optionHeight = updateDY
@@ -360,10 +382,100 @@ def launchOptions():
     pygame.event.clear()
     settings["resolution"] = resolutions[resolution]
     saveXML()
+    reloadScreensize()
     changeSystem(0) #refresh game list in case kids mode changed
     resizeImages()
     drawScreen()
+
+def reloadScreensize():
+    global txtWidth, menuTitle, menuX, menuY, imgX, imgY, imgBigX, imgBigY
+    global menuSpacing, lblChoosen, systemTitle, lblCommand, lblFPS
+    global wheelBGX, wheelBGY, wheelCoverX, wheelCoverY, updateX, updateY
+    global updateDX, updateDY, scaleX, scaleY, bgImg, fgImg, wheelCoverImg
+    global wheelBGImg, wheelFGImg, bigfont, font, tinyfont, windowHeight, windowWidth
+    
+    #1080p Resolution - all other resolutions are scaled from this
+    bigfont = pygame.font.SysFont("monospace bold", 75)
+    font = pygame.font.SysFont("monospace bold", 50)
+    tinyfont = pygame.font.SysFont("monospace", 20)
+    txtWidth = 320
+    menuTitle = 132
+    menuX = 1791
+    menuY = 600
+    imgX = 569
+    imgY = 231
+    imgBigX = 569
+    imgBigY = 673
+    menuSpacing = font.get_linesize() + 10
+    bgImg = pygame.image.load("bg.png")
+    fgImg = pygame.image.load("fg.png")
+    gameImg = pygame.image.load("blank.png")
+    gameBigImg = pygame.image.load("blank.png")
+    wheelCoverImg = pygame.image.load("wheel.png")
+    wheelBGImg = pygame.image.load("wheelBG.png")
+    wheelFGImg = pygame.image.load("wheelFG.png")
+    oldMenuY = menuY
+
+    past = [0 for x in range(0,wheelDepth)]
+    futr = [0 for x in range(0,wheelDepth)]
+
+    FPS = 60
+    fpsClock = pygame.time.Clock()
+
+    info = pygame.display.Info()
+    try:
+        windowHeight
+        windowWidth
+    except:
+        windowHeight = info.current_h
+        windowWidth = info.current_w
         
+    #determine scale from 1080p base
+    scaleX = float(1920)/windowWidth
+    scaleY = float(1080)/windowHeight
+    #resize elements
+    bgImg = pygame.transform.scale(bgImg, (windowWidth, windowHeight))
+    fgImg = pygame.transform.scale(fgImg, (windowWidth, windowHeight))
+
+    if(windowHeight!=1080):
+        wheelCoverImg = pygame.transform.scale(wheelCoverImg, (int(wheelCoverImg.get_rect().width/scaleX),int(wheelCoverImg.get_rect().height/scaleY)))
+        wheelBGImg = pygame.transform.scale(wheelBGImg, (int(wheelBGImg.get_rect().width/scaleX), int(wheelBGImg.get_rect().height/scaleY)))
+        wheelFGImg = pygame.transform.scale(wheelFGImg, (int(wheelFGImg.get_rect().width/scaleX), int(wheelFGImg.get_rect().height/scaleY)))
+
+    if(debug):
+        print("Resolution changed to: " + str(windowWidth) + "x" + str(windowHeight))
+
+    #adjustments for other resolutions
+    if(windowHeight!=1080):
+        bigfont = pygame.font.SysFont("monospace bold", int(75/scaleX))
+        font = pygame.font.SysFont("monospace bold", int(50/scaleX))
+        tinyfont = pygame.font.SysFont("monospace", int(20/scaleX))
+        txtWidth = txtWidth/scaleX
+        menuTitle = menuTitle/scaleY
+        menuX = menuX/scaleX
+        menuY = menuY/scaleY
+        imgX = imgX/scaleX
+        imgY = imgY/scaleY
+        imgBigX = imgBigX/scaleX
+        imgBigY = imgBigY/scaleY
+        menuSpacing = menuSpacing/scaleY
+    lblChoosen = bigfont.render("", 1, (255,255,255))
+    systemTitle = bigfont.render(systems[systemID][0], 1, (255,255,255))
+    lblCommand = font.render("", 1, (255,255,255))
+    lblFPS = font.render("", 1, (255,255,255))
+    #menuSpacing = font.get_linesize() + 10
+    wheelBGX = int(1104/scaleX)
+    wheelBGY = int(72/scaleY)
+    wheelCoverX = int(1142/scaleX)
+    wheelCoverY = int(268/scaleY)
+    updateX = int(1148/scaleX)
+    updateY = int(274/scaleY)
+    updateDX = int((wheelCoverImg.get_rect().width-16))
+    updateDY = int((wheelCoverImg.get_rect().height-24))
+
+    screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
+    pygame.display.set_caption('Sykotic Gaming')
+    
 def launchGame():
     pygame.event.set_grab(False)
     screen = pygame.display.set_mode((0,0),NOFRAME) # hide my screen
