@@ -191,8 +191,9 @@ def procEvents(evt):
         quitOut()
     elif evt.type == KEYDOWN:
         goodEvent = True
-        if(pygame.mixer.music.get_busy()):
-            pygame.mixer.music.stop()
+        if not evt.key == 111:
+            if(pygame.mixer.music.get_busy()):
+                pygame.mixer.music.stop()
         #print event.key
         if evt.key == 113: # q key
             quitOut()
@@ -215,13 +216,44 @@ def procEvents(evt):
         goodEvent = False
 
 def launchOptions():
+    global audioMax, audioVolume, childLock, debug
     def procInput(evt):
         if evt.type == KEYDOWN:
             if evt.key == 111: # o key
                 return "close"
-            elif evt.key == K_UP or evt.key == K_DOWN or evt.key == K_LEFT or evt.key == K_RIGHT:
+            elif evt.key == K_UP or evt.key == K_DOWN or evt.key == K_LEFT or evt.key == K_RIGHT or evt.key == K_RETURN:
                 return evt.key
                 
+    def volBar():
+        s3.fill((0,0,0,255), ((optionWidth*.06),(optionHeight*.05)+(menuSpacing*3.2),(optionWidth*.88),menuSpacing))
+        s3.fill((255,255,255,255), ((optionWidth*.06),(optionHeight*.05)+(menuSpacing*3.2),(optionWidth*.88)*audioMax,menuSpacing))
+        
+    def resOptions(): #windowHeight, windowWidth 
+        res = font.render(resolutions[resolution], 1, (255,255,255))
+        s3.fill((0,0,0,255), ((optionWidth*.30),(optionHeight*.05)+(menuSpacing*5.6),(optionWidth*.4),menuSpacing*.75))
+        s3.blit(res, ((optionWidth/2)-res.get_rect().centerx,(optionHeight*.05)+(menuSpacing*5.6),(optionWidth*.88),menuSpacing))
+    
+    def kidsOption():
+        if(childLock):
+            on = font.render("ON", 1, (255,255,255))
+            off = font.render("OFF", 1, (128,128,128))
+        else:
+            on = font.render("ON", 1, (128,128,128))
+            off = font.render("OFF", 1, (255,255,255))
+        s3.blit(on, ((optionWidth*.33)-on.get_rect().centerx,(optionHeight*.05)+(menuSpacing*8.0),(optionWidth*.88),menuSpacing))
+        s3.blit(off, ((optionWidth*.66)-off.get_rect().centerx,(optionHeight*.05)+(menuSpacing*8.0),(optionWidth*.88),menuSpacing))
+        
+    def debugOption():
+        if(debug):
+            on = font.render("ON", 1, (255,255,255))
+            off = font.render("OFF", 1, (128,128,128))
+        else:
+            on = font.render("ON", 1, (128,128,128))
+            off = font.render("OFF", 1, (255,255,255))
+        s3.blit(on, ((optionWidth*.33)-on.get_rect().centerx,(optionHeight*.05)+(menuSpacing*10.4),(optionWidth*.88),menuSpacing))
+        s3.blit(off, ((optionWidth*.66)-off.get_rect().centerx,(optionHeight*.05)+(menuSpacing*10.4),(optionWidth*.88),menuSpacing))
+        
+        
     optionWidth = updateDX-100
     optionHeight = updateDY
     optionX = (windowWidth/2)-(optionWidth/2)
@@ -236,7 +268,7 @@ def launchOptions():
     screen.blit(s2, (optionX,optionY))
     pygame.display.update(optionX,optionY,optionWidth,optionHeight)
     s3 = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
-    spacing = menuSpacing + 20
+    spacing = menuSpacing*2.3
     title = font.render("Options Menu", 1, (255,255,255))
     option0On = font.render("Volume", 1, (255,255,255))
     option0Off = font.render("Volume", 1, (128,128,128))
@@ -244,31 +276,70 @@ def launchOptions():
     option1Off = font.render("Resolution", 1, (128,128,128))
     option2On = font.render("Kids Mode", 1, (255,255,255))
     option2Off = font.render("Kids Mode", 1, (128,128,128))
-    optionsOn = [option0On,option1On,option2On]
-    optionsOff = [option0Off,option1Off,option2Off]
+    option3On = font.render("Debug Mode", 1, (255,255,255))
+    option3Off = font.render("Debug Mode", 1, (128,128,128))
+    option4On = font.render("Exit", 1, (255,255,255))
+    option4Off = font.render("Exit", 1, (128,128,128))
+    
+    resolutions = ["auto","1080p","1600x900","720p","720x480","480p"]
+    resolution = 0
+    for x in range(0,len(resolutions)):
+        if resolutions[x] == settings["resolution"]:
+            resolution = x
+
+    optionsOn = [option0On,option1On,option2On,option3On,option4On]
+    optionsOff = [option0Off,option1Off,option2Off,option3Off,option4Off]
     selected = 0
     while not (inputEvent == "close"):
         s3.blit(title, ((optionWidth/2)-title.get_rect().centerx,optionHeight*.04))
         for x in range(0,len(optionsOn)):
             if(selected == x):
-                s3.blit(optionsOn[x], ((optionWidth/2)-optionsOn[x].get_rect().centerx,(optionHeight*.04)+(spacing*(x+1))))
+                s3.blit(optionsOn[x], ((optionWidth/2)-optionsOn[x].get_rect().centerx,(optionHeight*.05)+(spacing*(x+1))))
             else:
-                s3.blit(optionsOff[x], ((optionWidth/2)-optionsOff[x].get_rect().centerx,(optionHeight*.04)+(spacing*(x+1))))
+                s3.blit(optionsOff[x], ((optionWidth/2)-optionsOff[x].get_rect().centerx,(optionHeight*.05)+(spacing*(x+1))))
+        volBar()
+        resOptions()
+        kidsOption()
+        debugOption()
         screen.blit(s3, (optionX,optionY))
         pygame.display.update(optionX,optionY,optionWidth,optionHeight)
         fpsClock.tick(FPS)
-        event = pygame.event.wait()
+        event = pygame.event.poll()
         inputEvent = procInput(event)
         if(inputEvent==K_DOWN):
             selected = selected + 1
             if(selected>len(optionsOn)-1):
                 selected = 0
-        if(inputEvent==K_UP):
+        elif(inputEvent==K_UP):
             selected = selected - 1
             if(selected<0):
                 selected = len(optionsOn)-1
+        elif(inputEvent==K_LEFT or inputEvent==K_RIGHT):
+            if(selected==0): #volume
+                if(inputEvent==K_LEFT):
+                    audioMax = audioMax - 0.01
+                else:
+                    audioMax = audioMax + 0.01
+                audioVolume = audioMax
+                pygame.mixer.music.set_volume(audioVolume)
+            elif(selected==1): #resolution
+                if(inputEvent==K_RIGHT):
+                    resolution = resolution + 1
+                    if(resolution>len(resolutions)-1):
+                        resolution = 0
+                else:
+                    resolution = resolution - 1
+                    if(resolution<0):
+                        resolution = len(resolutions)-1
+            elif(selected==2): #kids mode
+                childLock = not childLock
+            elif(selected==3): #kids mode
+                debug = not debug
+        elif inputEvent==K_RETURN and (selected==(len(optionsOn)-1)):
+            inputEvent = "close"
         
     pygame.event.clear()
+    settings["resolution"] = resolutions[resolution]
         
 def launchGame():
     pygame.event.set_grab(False)
