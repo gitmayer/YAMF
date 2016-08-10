@@ -11,7 +11,7 @@ from pygame.locals import *
 
 #default settings
 settings = {"path":u"C:/SykoGame",
-            "resolution":"",
+            "resolution":"auto",
             "width":0,
             "height":0,
             "volume":0.5,
@@ -253,7 +253,26 @@ def launchOptions():
         s3.blit(on, ((optionWidth*.33)-on.get_rect().centerx,(optionHeight*.05)+(menuSpacing*10.4),(optionWidth*.88),menuSpacing))
         s3.blit(off, ((optionWidth*.66)-off.get_rect().centerx,(optionHeight*.05)+(menuSpacing*10.4),(optionWidth*.88),menuSpacing))
         
-        
+    def saveXML():
+        with open("settings.xml", 'w') as f:
+            f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
+            f.write("<settings>\n")
+            f.write("\t<resolution value=\"" + resolutions[resolution] + "\">\n")
+            f.write("\t\t<width>1280</width>\n")
+            f.write("\t\t<height>720</height>\n")
+            f.write("\t</resolution>\n")
+            f.write("\t<audio volume=\"" + str(audioMax) + "\" />\n")
+            if(childLock):
+                f.write("\t<childlock value=\"" + str(childLock) + "\" />\n")
+            else:
+                f.write("\t<childlock value=\"\" />\n")
+            f.write("\t<wheel value=\"7\" />\n")
+            if(debug):
+                f.write("\t<debug value=\"" + str(debug) + "\" />\n")
+            else:
+                f.write("\t<debug value=\"\" />\n")
+            f.write("</settings>")
+    
     optionWidth = updateDX-100
     optionHeight = updateDY
     optionX = (windowWidth/2)-(optionWidth/2)
@@ -278,8 +297,8 @@ def launchOptions():
     option2Off = font.render("Kids Mode", 1, (128,128,128))
     option3On = font.render("Debug Mode", 1, (255,255,255))
     option3Off = font.render("Debug Mode", 1, (128,128,128))
-    option4On = font.render("Exit", 1, (255,255,255))
-    option4Off = font.render("Exit", 1, (128,128,128))
+    option4On = font.render("Close", 1, (255,255,255))
+    option4Off = font.render("Close", 1, (128,128,128))
     
     resolutions = ["auto","1080p","1600x900","720p","720x480","480p"]
     resolution = 0
@@ -340,6 +359,10 @@ def launchOptions():
         
     pygame.event.clear()
     settings["resolution"] = resolutions[resolution]
+    saveXML()
+    changeSystem(0) #refresh game list in case kids mode changed
+    resizeImages()
+    drawScreen()
         
 def launchGame():
     pygame.event.set_grab(False)
