@@ -196,6 +196,8 @@ def procEvents(evt):
         #print event.key
         if evt.key == 113: # q key
             quitOut()
+        elif evt.key == 111: # o key
+            launchOptions()
         elif evt.key == K_UP:
             changeGame(-1)
         elif evt.key == K_DOWN:
@@ -212,6 +214,62 @@ def procEvents(evt):
     else:
         goodEvent = False
 
+def launchOptions():
+    def procInput(evt):
+        if evt.type == KEYDOWN:
+            if evt.key == 111: # o key
+                return "close"
+            elif evt.key == K_UP or evt.key == K_DOWN or evt.key == K_LEFT or evt.key == K_RIGHT:
+                return evt.key
+                
+    optionWidth = updateDX-100
+    optionHeight = updateDY
+    optionX = (windowWidth/2)-(optionWidth/2)
+    optionY = (windowHeight/2)-(optionHeight/2)
+    event = pygame.event.poll()
+    inputEvent = procInput(event)
+    s = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
+    s2 = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
+    s.fill((25,200,25,175), (0,0,optionWidth,optionHeight))
+    s2.fill((0,0,0,200), (optionWidth*.02,optionHeight*.02,optionWidth-2*(optionWidth*.02),optionHeight-2*(optionHeight*.02)))
+    screen.blit(s, (optionX,optionY))
+    screen.blit(s2, (optionX,optionY))
+    pygame.display.update(optionX,optionY,optionWidth,optionHeight)
+    s3 = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
+    spacing = menuSpacing + 20
+    title = font.render("Options Menu", 1, (255,255,255))
+    option0On = font.render("Volume", 1, (255,255,255))
+    option0Off = font.render("Volume", 1, (128,128,128))
+    option1On = font.render("Resolution", 1, (255,255,255))
+    option1Off = font.render("Resolution", 1, (128,128,128))
+    option2On = font.render("Kids Mode", 1, (255,255,255))
+    option2Off = font.render("Kids Mode", 1, (128,128,128))
+    optionsOn = [option0On,option1On,option2On]
+    optionsOff = [option0Off,option1Off,option2Off]
+    selected = 0
+    while not (inputEvent == "close"):
+        s3.blit(title, ((optionWidth/2)-title.get_rect().centerx,optionHeight*.04))
+        for x in range(0,len(optionsOn)):
+            if(selected == x):
+                s3.blit(optionsOn[x], ((optionWidth/2)-optionsOn[x].get_rect().centerx,(optionHeight*.04)+(spacing*(x+1))))
+            else:
+                s3.blit(optionsOff[x], ((optionWidth/2)-optionsOff[x].get_rect().centerx,(optionHeight*.04)+(spacing*(x+1))))
+        screen.blit(s3, (optionX,optionY))
+        pygame.display.update(optionX,optionY,optionWidth,optionHeight)
+        fpsClock.tick(FPS)
+        event = pygame.event.wait()
+        inputEvent = procInput(event)
+        if(inputEvent==K_DOWN):
+            selected = selected + 1
+            if(selected>len(optionsOn)-1):
+                selected = 0
+        if(inputEvent==K_UP):
+            selected = selected - 1
+            if(selected<0):
+                selected = len(optionsOn)-1
+        
+    pygame.event.clear()
+        
 def launchGame():
     pygame.event.set_grab(False)
     screen = pygame.display.set_mode((0,0),NOFRAME) # hide my screen
@@ -249,7 +307,7 @@ def changeGame(dir):
     global gameID, animateDone, direction, menuY, oldMenuY
     if not animateDone:
         menuY = oldMenuY #reset center
-        fillWheel(False) #load the last selection before more animation
+        fillWheel() #load the last selection before more animation
         drawMenu("wheel") #draw the new wheel entries
         #resizeImages()
         #drawScreen()
@@ -282,7 +340,7 @@ def animateWheel(dir):
         resizeImages()
         drawScreen()
 
-def fillWheel(assests):
+def fillWheel(assests=False):
     global lblChoosen, lblCommand
     global past, futr
     lblCommand = tinyfont.render("Command: " + systems[systemID][1] + games[gameID[systemID]][0], 1, (255,255,255))
