@@ -1,5 +1,7 @@
 #!/usr/bin/python
-
+"""
+something
+"""
 try:
     from cStringIO import StringIO as BytesIO
 except ImportError:
@@ -9,6 +11,10 @@ import pygame, sys, os, time, csv
 from xml.dom import minidom
 from pygame.locals import *
 
+def debugPrint(msg):
+    print(msg.replace("\n","",3))
+    with open("debug.txt", 'a') as f:
+        f.write(msg + "\n")
 #default settings
 settings = {"path":u"C:/SykoGame",
             "resolution":"auto",
@@ -42,10 +48,10 @@ if(settings["resolution"]!='auto'): #display resolution overrride
     windowHeight = settings["height"]
     windowWidth = settings["width"]
 debug = settings["debug"]
-
+if(debug):
+    debugPrint("---" + time.ctime() + "---")
 
 systemID = 0
-#gameID = 0
 systems = []
 with open("systems.csv", 'r') as systemsFile:
     reader = csv.reader(systemsFile, delimiter=',')
@@ -57,8 +63,9 @@ with open(systems[systemID][0] + "/games.csv", 'r') as gamesFile:
     reader = csv.reader(gamesFile, delimiter=',')
     for row in reader:
         if(childLock):
-            if(row[2]=="Kids"):
-                games.append(row)
+            if(len(row)==3):
+                if(row[2]=="Kids"):
+                    games.append(row)
         else:
             games.append(row)
 
@@ -118,7 +125,7 @@ if(windowHeight!=1080):
     wheelFGImg = pygame.transform.scale(wheelFGImg, (int(wheelFGImg.get_rect().width/scaleX), int(wheelFGImg.get_rect().height/scaleY)))
 
 if(debug):
-    print("Resolution: " + str(windowWidth) + "x" + str(windowHeight))
+    debugPrint("Resolution: " + str(windowWidth) + "x" + str(windowHeight))
 
 #adjustments for other resolutions
 if(windowHeight!=1080):
@@ -138,7 +145,6 @@ lblChoosen = bigfont.render("", 1, (255,255,255))
 systemTitle = bigfont.render(systems[systemID][0], 1, (255,255,255))
 lblCommand = font.render("", 1, (255,255,255))
 lblFPS = font.render("", 1, (255,255,255))
-#menuSpacing = font.get_linesize() + 10
 wheelBGX = int(1104/scaleX)
 wheelBGY = int(72/scaleY)
 wheelCoverX = int(1142/scaleX)
@@ -148,7 +154,12 @@ updateY = int(274/scaleY)
 updateDX = int((wheelCoverImg.get_rect().width-16))
 updateDY = int((wheelCoverImg.get_rect().height-24))
 
-screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
+try:
+    screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
+except:
+    windowHeight = info.current_h
+    windowWidth = info.current_w
+    screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
 pygame.display.set_caption('Sykotic Gaming')
 animateDone = True
 direction = ""
@@ -158,7 +169,7 @@ def frange(start, stop, step):
     while i < stop:
         yield i
         i += step
-
+        
 def resizeImages():
     global gameBigImg, gameImg
     height = 222/scaleY
@@ -180,7 +191,7 @@ def resizeImages():
     
 def quitOut():
     if(debug):
-        print "DONE: " + str(evtCount) + " Events Total"
+        debugPrint("DONE: " + str(evtCount) + " Events Total\n\n")
     os.chdir(newpath)
     pygame.quit()
     sys.exit()
@@ -211,12 +222,14 @@ def procEvents(evt):
             launchGame()
         else:
             if(debug):
-                print("unkown input {key:" + str(evt.key) + "}")
+                debugPrint("unkown input {key:" + str(evt.key) + "}")
     else:
         goodEvent = False
 
 def launchOptions():
     global audioMax, audioVolume, childLock, debug, windowWidth, windowHeight
+    resChanged = False
+    kidChanged = False
     def procInput(evt):
         if evt.type == KEYDOWN:
             if evt.key == 111: # o key
@@ -259,19 +272,25 @@ def launchOptions():
             f.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
             f.write("<settings>\n")
             f.write("\t<resolution value=\"" + resolutions[resolution] + "\">\n")
-            if(resolutions[resolution]=="1080p"):
+            if(resolutions[resolution]=="TV-1080p"):
                 windowWidth = 1920
                 windowHeight = 1080
             elif(resolutions[resolution]=="1600x900"):
                 windowWidth = 1600
                 windowHeight = 900
-            elif(resolutions[resolution]=="720p"):
+            elif(resolutions[resolution]=="1440x900"):
+                windowWidth = 1440
+                windowHeight = 900
+            elif(resolutions[resolution]=="TV-720p"):
                 windowWidth = 1280
                 windowHeight = 720
+            elif(resolutions[resolution]=="1024x768"):
+                windowWidth = 1024
+                windowHeight = 768
             elif(resolutions[resolution]=="720x480"):
                 windowWidth = 720
                 windowHeight = 480
-            elif(resolutions[resolution]=="480p"):
+            elif(resolutions[resolution]=="TV-480p"):
                 windowWidth = 640
                 windowHeight = 480
             else: #auto
@@ -288,8 +307,10 @@ def launchOptions():
             f.write("\t<wheel value=\"7\" />\n")
             if(debug):
                 f.write("\t<debug value=\"" + str(debug) + "\" />\n")
+                debugPrint("---" + time.ctime() + "---")
             else:
                 f.write("\t<debug value=\"\" />\n")
+                debugPrint("--- Debugging turned off in options ---\n\n")
             f.write("</settings>")
         bigfont = pygame.font.SysFont("monospace bold", int(75/scaleX))
         font = pygame.font.SysFont("monospace bold", int(50/scaleX))
@@ -322,7 +343,7 @@ def launchOptions():
     option4On = font.render("Close", 1, (255,255,255))
     option4Off = font.render("Close", 1, (128,128,128))
     
-    resolutions = ["auto","1080p","1600x900","720p","720x480","480p"]
+    resolutions = ["auto","TV-1080p","1440x900","1600x900","TV-720p","1024x768","720x480","TV-480p"]
     resolution = 0
     for x in range(0,len(resolutions)):
         if resolutions[x] == settings["resolution"]:
@@ -364,6 +385,7 @@ def launchOptions():
                 audioVolume = audioMax
                 pygame.mixer.music.set_volume(audioVolume)
             elif(selected==1): #resolution
+                resChanged = True
                 if(inputEvent==K_RIGHT):
                     resolution = resolution + 1
                     if(resolution>len(resolutions)-1):
@@ -373,8 +395,9 @@ def launchOptions():
                     if(resolution<0):
                         resolution = len(resolutions)-1
             elif(selected==2): #kids mode
+                kidChanged = True
                 childLock = not childLock
-            elif(selected==3): #kids mode
+            elif(selected==3): #debug mode
                 debug = not debug
         elif inputEvent==K_RETURN and (selected==(len(optionsOn)-1)):
             inputEvent = "close"
@@ -382,12 +405,14 @@ def launchOptions():
     pygame.event.clear()
     settings["resolution"] = resolutions[resolution]
     saveXML()
-    reloadScreensize()
-    changeSystem(0) #refresh game list in case kids mode changed
-    resizeImages()
+    if(resChanged):
+        reloadResolution()
+    if(resChanged or kidChanged):
+        changeSystem(0) #refresh game list in case kids mode changed
+        resizeImages()
     drawScreen()
-
-def reloadScreensize():
+    
+def reloadResolution():
     global txtWidth, menuTitle, menuX, menuY, imgX, imgY, imgBigX, imgBigY
     global menuSpacing, lblChoosen, systemTitle, lblCommand, lblFPS
     global wheelBGX, wheelBGY, wheelCoverX, wheelCoverY, updateX, updateY
@@ -443,7 +468,7 @@ def reloadScreensize():
         wheelFGImg = pygame.transform.scale(wheelFGImg, (int(wheelFGImg.get_rect().width/scaleX), int(wheelFGImg.get_rect().height/scaleY)))
 
     if(debug):
-        print("Resolution changed to: " + str(windowWidth) + "x" + str(windowHeight))
+        debugPrint("Resolution changed to: " + str(windowWidth) + "x" + str(windowHeight))
 
     #adjustments for other resolutions
     if(windowHeight!=1080):
@@ -463,7 +488,6 @@ def reloadScreensize():
     systemTitle = bigfont.render(systems[systemID][0], 1, (255,255,255))
     lblCommand = font.render("", 1, (255,255,255))
     lblFPS = font.render("", 1, (255,255,255))
-    #menuSpacing = font.get_linesize() + 10
     wheelBGX = int(1104/scaleX)
     wheelBGY = int(72/scaleY)
     wheelCoverX = int(1142/scaleX)
@@ -472,15 +496,25 @@ def reloadScreensize():
     updateY = int(274/scaleY)
     updateDX = int((wheelCoverImg.get_rect().width-16))
     updateDY = int((wheelCoverImg.get_rect().height-24))
-
-    screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
+    try:
+        screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
+    except:
+        windowHeight = info.current_h
+        windowWidth = info.current_w
+        screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
     pygame.display.set_caption('Sykotic Gaming')
     
 def launchGame():
+    if(debug):
+        debugPrint("game launch - " + systems[systemID][1] + games[gameID[systemID]][0])
+        timeStart = time.time()
     pygame.event.set_grab(False)
     screen = pygame.display.set_mode((0,0),NOFRAME) # hide my screen
     os.popen(systems[systemID][1] + games[gameID[systemID]][0]) # launch game
     #pygame.event.pump() #tell event that "you're still here"
+    if(debug):
+        timeStop = time.time()
+        debugPrint("returned after " + str((timeStop - timeStart)/100) + " seconds")
     pygame.event.clear() #clear out all button pushes
     time.sleep(1.5) # give time to recover
     screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
@@ -502,8 +536,9 @@ def changeSystem(dir):
         reader = csv.reader(gamesFile, delimiter=',')
         for row in reader:
             if(childLock):
-                if(row[2]=="Kids"):
-                    games.append(row)
+                if(len(row)==3):
+                    if(row[2]=="Kids"):
+                        games.append(row)
             else:
                 games.append(row)
     #gameID = 0
@@ -515,8 +550,6 @@ def changeGame(dir):
         menuY = oldMenuY #reset center
         fillWheel() #load the last selection before more animation
         drawMenu("wheel") #draw the new wheel entries
-        #resizeImages()
-        #drawScreen()
     else:
         animateDone = False
     gameID[systemID] = gameID[systemID] + (1*dir)
@@ -564,9 +597,6 @@ def fillWheel(assests=False):
             f = len(games)-1
         elif f > len(games)-1:
             f = 0
-        #a = ((x+1)*25)
-        #past[x] = font.render(games[p][1], 1, (180-a,180-a,180-a))
-        #futr[x] = font.render(games[f][1], 1, (180-a,180-a,180-a))
         past[x] = font.render(games[p][1][0:30], 1, (255,255,255))
         futr[x] = font.render(games[f][1][0:30], 1, (255,255,255))
     if assests:
@@ -620,7 +650,6 @@ def drawScreen():
     screen.blit(bgImg, (0,0))
     screen.blit(gameBigImg, (imgBigX-(gameBigImg.get_rect().centerx),(imgBigY-(gameBigImg.get_rect().centery))))
     screen.blit(gameImg, (imgX-(gameImg.get_rect().centerx),imgY-(gameImg.get_rect().centery)))
-    #screen.blit(gameBigImg, (imgX-(gameBigImg.get_rect().width/2),gameImg.get_rect().height + 20 + imgY))
     
     #wheel
     drawMenu("wheel")
@@ -629,7 +658,6 @@ def drawScreen():
     else:
         screen.blit(wheelCoverImg, (1142/scaleX,268/scaleY))
     screen.blit(lblChoosen, (((menuX-txtWidth)-lblChoosen.get_rect().centerx), menuY))
-    #screen.blit(wheelCoverImg, (1000,100))
     screen.blit(fgImg, (0,0))
     if(debug):
         screen.blit(lblCommand, (10,windowHeight-25))
@@ -643,7 +671,6 @@ def fadeIn(step, max):
     audioVolume = audioVolume + step
     if(audioVolume<=max):
         pygame.mixer.music.set_volume(audioVolume)
-        #time.sleep(0.1)
         fadeStep = time.time()
         
 fillWheel(True) # fill wheel with games
@@ -663,7 +690,6 @@ while True:
     procEvents(event)
     
     if not animateDone:
-        #print(direction, animateDone)
         animateWheel(direction)
     
     if(audioVolume!=0 and audioVolume!=audioMax):
