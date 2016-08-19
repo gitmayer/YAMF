@@ -203,12 +203,8 @@ def keyMap(evt):
     goodEvent = False
     if evt.type == KEYDOWN:
         goodEvent = True
-        if(debug):
-            print("Key " + str(evt.key) + " down")
         keys[evt.key] = True
     elif evt.type == KEYUP:
-        if(debug):
-            print("Key " + str(evt.key) + " up")
         keys[evt.key] = False
     if evt.type == QUIT:
         quitOut()
@@ -410,9 +406,15 @@ def launchOptions():
                         resolution = len(resolutions)-1
             elif(selected==2): #kids mode
                 kidChanged = True
-                childLock = not childLock
+                if keys[K_LEFT]:
+                    childLock = True
+                if keys[K_RIGHT]:
+                    childLock = False
             elif(selected==3): #debug mode
-                debug = not debug
+                if keys[K_LEFT]:
+                    debug = True
+                if keys[K_RIGHT]:
+                    debug = False
         elif keys[111] or (keys[K_RETURN] and (selected==(len(optionsOn)-1))):
             menuOpen = False
             keys[111] = False
@@ -575,7 +577,7 @@ def changeGame(dir):
         gameID[systemID] = len(games)-1 # loop
     oldMenuY = menuY
     direction = dir
-    fpsClock.tick(10)
+    fpsClock.tick(15) #slow it down for key repeat
     #animateWheel(dir)
     #fillWheel()
 
