@@ -103,6 +103,8 @@ futr = [0 for x in range(0,wheelDepth)]
 
 FPS = 60
 fpsClock = pygame.time.Clock()
+goodEvent = False
+keys = [0] * 512
 
 info = pygame.display.Info()
 try:
@@ -196,47 +198,56 @@ def quitOut():
     pygame.quit()
     sys.exit()
     
-def procEvents(evt):
+def keyMap(evt):
     global goodEvent
+    goodEvent = False
+    if evt.type == KEYDOWN:
+        goodEvent = True
+        if(debug):
+            print("Key " + str(evt.key) + " down")
+        keys[evt.key] = True
+    elif evt.type == KEYUP:
+        if(debug):
+            print("Key " + str(evt.key) + " up")
+        keys[evt.key] = False
     if evt.type == QUIT:
         quitOut()
-    elif evt.type == KEYDOWN:
-        goodEvent = True
-        if not evt.key == 111:
-            if(pygame.mixer.music.get_busy()):
-                pygame.mixer.music.stop()
-        #print event.key
-        if evt.key == 113: # q key
-            quitOut()
-        elif evt.key == 111: # o key
-            launchOptions()
-        elif evt.key == K_UP:
+    
+def procEvents():
+    global keys
+    if not keys[111]:
+        if(pygame.mixer.music.get_busy()):
+            pygame.mixer.music.stop()
+    #print event.key
+    #if evt.key == 113: # q key
+    if keys[113]: # q key
+        quitOut()
+    elif keys[111]: # o key
+        keys[111] = False
+        launchOptions()
+    if keys[K_UP] or keys[K_DOWN]:
+        if keys[K_UP]:
             changeGame(-1)
-        elif evt.key == K_DOWN:
-            changeGame(1)
-        elif evt.key == K_LEFT:
-            changeSystem(-1)
-        elif evt.key == K_RIGHT:
-            changeSystem(1)
-        elif evt.key == K_RETURN:
-            launchGame()
         else:
-            if(debug):
-                debugPrint("unkown input {key:" + str(evt.key) + "}")
-    else:
-        goodEvent = False
+            changeGame(1)
+    elif keys[K_LEFT] or keys[K_RIGHT]:
+        if keys[K_LEFT]:
+            changeSystem(-1)
+        else:
+            changeSystem(1)
+        keys[K_LEFT] = False
+        keys[K_RIGHT] = False
+    if keys[K_RETURN]:
+        keys[K_RETURN] = False
+        launchGame()
 
 def launchOptions():
     global audioMax, audioVolume, childLock, debug, windowWidth, windowHeight
+    global keys
+    menuOpen = True
     resChanged = False
     kidChanged = False
-    def procInput(evt):
-        if evt.type == KEYDOWN:
-            if evt.key == 111: # o key
-                return "close"
-            elif evt.key == K_UP or evt.key == K_DOWN or evt.key == K_LEFT or evt.key == K_RIGHT or evt.key == K_RETURN:
-                return evt.key
-                
+     
     def volBar():
         s3.fill((0,0,0,255), ((optionWidth*.06),(optionHeight*.05)+(menuSpacing*3.2),(optionWidth*.88),menuSpacing))
         s3.fill((255,255,255,255), ((optionWidth*.06),(optionHeight*.05)+(menuSpacing*3.2),(optionWidth*.88)*audioMax,menuSpacing))
@@ -321,7 +332,8 @@ def launchOptions():
     optionX = (windowWidth/2)-(optionWidth/2)
     optionY = (windowHeight/2)-(optionHeight/2)
     event = pygame.event.poll()
-    inputEvent = procInput(event)
+    #inputEvent = procInput(event)
+    keyMap(event)
     s = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
     s2 = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
     s.fill((25,200,25,175), (0,0,optionWidth,optionHeight))
@@ -352,7 +364,8 @@ def launchOptions():
     optionsOn = [option0On,option1On,option2On,option3On,option4On]
     optionsOff = [option0Off,option1Off,option2Off,option3Off,option4Off]
     selected = 0
-    while not (inputEvent == "close"):
+    #while not (inputEvent == "close"):
+    while menuOpen:
         s3.blit(title, ((optionWidth/2)-title.get_rect().centerx,optionHeight*.04))
         for x in range(0,len(optionsOn)):
             if(selected == x):
@@ -365,20 +378,21 @@ def launchOptions():
         debugOption()
         screen.blit(s3, (optionX,optionY))
         pygame.display.update(optionX,optionY,optionWidth,optionHeight)
-        fpsClock.tick(FPS)
+        fpsClock.tick(10)
         event = pygame.event.poll()
-        inputEvent = procInput(event)
-        if(inputEvent==K_DOWN):
+        #inputEvent = procInput(event)
+        keyMap(event)
+        if(keys[K_DOWN]):
             selected = selected + 1
             if(selected>len(optionsOn)-1):
                 selected = 0
-        elif(inputEvent==K_UP):
+        elif(keys[K_UP]):
             selected = selected - 1
             if(selected<0):
                 selected = len(optionsOn)-1
-        elif(inputEvent==K_LEFT or inputEvent==K_RIGHT):
+        elif(keys[K_LEFT] or keys[K_RIGHT]):
             if(selected==0): #volume
-                if(inputEvent==K_LEFT):
+                if(keys[K_LEFT]):
                     audioMax = audioMax - 0.01
                 else:
                     audioMax = audioMax + 0.01
@@ -386,7 +400,7 @@ def launchOptions():
                 pygame.mixer.music.set_volume(audioVolume)
             elif(selected==1): #resolution
                 resChanged = True
-                if(inputEvent==K_RIGHT):
+                if(keys[K_RIGHT]):
                     resolution = resolution + 1
                     if(resolution>len(resolutions)-1):
                         resolution = 0
@@ -399,8 +413,10 @@ def launchOptions():
                 childLock = not childLock
             elif(selected==3): #debug mode
                 debug = not debug
-        elif inputEvent==K_RETURN and (selected==(len(optionsOn)-1)):
-            inputEvent = "close"
+        elif keys[111] or (keys[K_RETURN] and (selected==(len(optionsOn)-1))):
+            menuOpen = False
+            keys[111] = False
+            keys[K_RETURN] = False
         
     pygame.event.clear()
     settings["resolution"] = resolutions[resolution]
@@ -559,6 +575,7 @@ def changeGame(dir):
         gameID[systemID] = len(games)-1 # loop
     oldMenuY = menuY
     direction = dir
+    fpsClock.tick(10)
     #animateWheel(dir)
     #fillWheel()
 
@@ -687,7 +704,8 @@ while True:
         timeStart = time.time()
     
     event = pygame.event.poll()
-    procEvents(event)
+    keyMap(event)
+    procEvents()
     
     if not animateDone:
         animateWheel(direction)
