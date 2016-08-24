@@ -1,0 +1,3 @@
+Copies folder structure from 'media' folder.
+
+Store .mp3 audio for game selection
