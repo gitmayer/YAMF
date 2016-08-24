@@ -25,3 +25,5 @@ Pygame (http://pygame.org/download.shtml)
 MAME / MESS (http://mamedev.org/release.html)
 
 Steam (http://store.steampowered.com/about/)
+
+EmuMovies Sync (http://emumovies.com/files/file/321-emumovies-sync/)
