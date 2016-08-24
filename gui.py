@@ -10,6 +10,7 @@ except ImportError:
 import pygame, sys, os, time, csv
 from xml.dom import minidom
 from pygame.locals import *
+from operator import itemgetter
 
 def debugPrint(msg):
     print(msg.replace("\n","",3))
@@ -53,22 +54,41 @@ if(debug):
 
 systemID = 0
 systems = []
+
 with open("systems.csv", 'r') as systemsFile:
+    firstRow = True
     reader = csv.reader(systemsFile, delimiter=',')
     for row in reader:
-        systems.append(row)
+        if(firstRow):
+            firstRow = False
+        else:
+            systems.append({"info":row, "games":[]})
+        
 gameID = [0 for x in range(0,len(systems))]
 games = []
-with open(systems[systemID][0] + "/games.csv", 'r') as gamesFile:
+
+with open("games.csv", 'r') as gamesFile:
     reader = csv.reader(gamesFile, delimiter=',')
     for row in reader:
-        if(childLock):
-            if(len(row)==3):
-                if(row[2]=="Kids"):
-                    games.append(row)
-        else:
-            games.append(row)
+        for system in systems:
+            if(system["info"][0]==row[0]):
+                system["games"].append(row)
+                if(system["games"][-1][4]==""):
+                    system["games"][-1][4]=system["games"][-1][3]
+        #games.append(row)
 
+# with open(systems[systemID]["info"]["info"][0] + "/games.csv", 'r') as gamesFile:
+    # reader = csv.reader(gamesFile, delimiter=',')
+    # for row in reader:
+        # if(childLock):
+            # if(len(row)==3):
+                # if(row[2]=="Kids"):
+                    # games.append(row)
+        # else:
+            # games.append(row)
+
+# print(games)            
+            
 pygame.mixer.pre_init(44100, -16, 2, 2048)
 pygame.init()
 pygame.mixer.init()
@@ -89,13 +109,13 @@ imgY = 231
 imgBigX = 569
 imgBigY = 673
 menuSpacing = font.get_linesize() + 10
-bgImg = pygame.image.load("bg.png")
-fgImg = pygame.image.load("fg.png")
-gameImg = pygame.image.load("blank.png")
-gameBigImg = pygame.image.load("blank.png")
-wheelCoverImg = pygame.image.load("wheel.png")
-wheelBGImg = pygame.image.load("wheelBG.png")
-wheelFGImg = pygame.image.load("wheelFG.png")
+bgImg = pygame.image.load("assets/bg.png")
+fgImg = pygame.image.load("assets/fg.png")
+gameImg = pygame.image.load("assets/blank.png")
+gameBigImg = pygame.image.load("assets/blank.png")
+wheelCoverImg = pygame.image.load("assets/wheel.png")
+wheelBGImg = pygame.image.load("assets/wheelBG.png")
+wheelFGImg = pygame.image.load("assets/wheelFG.png")
 oldMenuY = menuY
 
 past = [0 for x in range(0,wheelDepth)]
@@ -144,7 +164,7 @@ if(windowHeight!=1080):
     imgBigY = imgBigY/scaleY
     menuSpacing = menuSpacing/scaleY
 lblChoosen = bigfont.render("", 1, (255,255,255))
-systemTitle = bigfont.render(systems[systemID][0], 1, (255,255,255))
+systemTitle = bigfont.render(systems[systemID]["info"][0], 1, (255,255,255))
 lblCommand = font.render("", 1, (255,255,255))
 lblFPS = font.render("", 1, (255,255,255))
 wheelBGX = int(1104/scaleX)
@@ -211,7 +231,7 @@ def keyMap(evt):
     
 def procEvents():
     global keys
-    if not keys[111]:
+    if (goodEvent) and not keys[111]:
         if(pygame.mixer.music.get_busy()):
             pygame.mixer.music.stop()
     #print event.key
@@ -239,7 +259,7 @@ def procEvents():
 
 def launchOptions():
     global audioMax, audioVolume, childLock, debug, windowWidth, windowHeight
-    global keys
+    global keys, gameID
     menuOpen = True
     resChanged = False
     kidChanged = False
@@ -426,6 +446,7 @@ def launchOptions():
     if(resChanged):
         reloadResolution()
     if(resChanged or kidChanged):
+        gameID[systemID] = 0
         changeSystem(0) #refresh game list in case kids mode changed
         resizeImages()
     drawScreen()
@@ -450,13 +471,13 @@ def reloadResolution():
     imgBigX = 569
     imgBigY = 673
     menuSpacing = font.get_linesize() + 10
-    bgImg = pygame.image.load("bg.png")
-    fgImg = pygame.image.load("fg.png")
-    gameImg = pygame.image.load("blank.png")
-    gameBigImg = pygame.image.load("blank.png")
-    wheelCoverImg = pygame.image.load("wheel.png")
-    wheelBGImg = pygame.image.load("wheelBG.png")
-    wheelFGImg = pygame.image.load("wheelFG.png")
+    bgImg = pygame.image.load("assets/bg.png")
+    fgImg = pygame.image.load("assets/fg.png")
+    gameImg = pygame.image.load("assets/blank.png")
+    gameBigImg = pygame.image.load("assets/blank.png")
+    wheelCoverImg = pygame.image.load("assets/wheel.png")
+    wheelBGImg = pygame.image.load("assets/wheelBG.png")
+    wheelFGImg = pygame.image.load("assets/wheelFG.png")
     oldMenuY = menuY
 
     past = [0 for x in range(0,wheelDepth)]
@@ -503,7 +524,7 @@ def reloadResolution():
         imgBigY = imgBigY/scaleY
         menuSpacing = menuSpacing/scaleY
     lblChoosen = bigfont.render("", 1, (255,255,255))
-    systemTitle = bigfont.render(systems[systemID][0], 1, (255,255,255))
+    systemTitle = bigfont.render(systems[systemID]["info"][0], 1, (255,255,255))
     lblCommand = font.render("", 1, (255,255,255))
     lblFPS = font.render("", 1, (255,255,255))
     wheelBGX = int(1104/scaleX)
@@ -524,11 +545,11 @@ def reloadResolution():
     
 def launchGame():
     if(debug):
-        debugPrint("game launch - " + systems[systemID][1] + games[gameID[systemID]][0])
+        debugPrint("game launch - " + systems[systemID]["info"][1] + games[gameID[systemID]][1])
         timeStart = time.time()
     pygame.event.set_grab(False)
     screen = pygame.display.set_mode((0,0),NOFRAME) # hide my screen
-    os.popen(systems[systemID][1] + games[gameID[systemID]][0]) # launch game
+    os.popen(systems[systemID]["info"][1] + games[gameID[systemID]][1]) # launch game
     #pygame.event.pump() #tell event that "you're still here"
     if(debug):
         timeStop = time.time()
@@ -548,17 +569,27 @@ def changeSystem(dir):
         systemID = 0 # loop
     elif systemID < 0:
         systemID = len(systems)-1 # loop
-    systemTitle = bigfont.render(systems[systemID][0], 1, (255,255,255))
+    systemTitle = bigfont.render(systems[systemID]["info"][0].replace("_"," "), 1, (255,255,255))
     games = []
-    with open(systems[systemID][0] + "/games.csv", 'r') as gamesFile:
-        reader = csv.reader(gamesFile, delimiter=',')
-        for row in reader:
-            if(childLock):
-                if(len(row)==3):
-                    if(row[2]=="Kids"):
-                        games.append(row)
-            else:
-                games.append(row)
+    for game in systems[systemID]["games"]:
+        if(childLock):
+            if(len(game)==6):
+                if(game[5]=="Kids"):
+                    games.append(game)
+        else:
+            games.append(game)
+    if(len(games)>1):
+        games = sorted(games, key=lambda games: games[4].lower())
+        #print(games)
+    # with open(systems[systemID]["info"][0] + "/games.csv", 'r') as gamesFile:
+        # reader = csv.reader(gamesFile, delimiter=',')
+        # for row in reader:
+            # if(childLock):
+                # if(len(row)==3):
+                    # if(row[2]=="Kids"):
+                        # games.append(row)
+            # else:
+                # games.append(row)
     #gameID = 0
     fillWheel(True)
 
@@ -601,10 +632,10 @@ def animateWheel(dir):
 def fillWheel(assests=False):
     global lblChoosen, lblCommand
     global past, futr
-    lblCommand = tinyfont.render("Command: " + systems[systemID][1] + games[gameID[systemID]][0], 1, (255,255,255))
+    lblCommand = tinyfont.render("Command: " + systems[systemID]["info"][1] + games[gameID[systemID]][1] + "." + games[gameID[systemID]][2], 1, (255,255,255))
     p = gameID[systemID]
     f = gameID[systemID]
-    lblChoosen = font.render(games[gameID[systemID]][1][0:30], 1, (255,255,255))
+    lblChoosen = font.render(games[gameID[systemID]][3][0:30], 1, (255,255,255))
     for x in range(0,len(past)):
         p -= 1
         f += 1
@@ -616,35 +647,34 @@ def fillWheel(assests=False):
             f = len(games)-1
         elif f > len(games)-1:
             f = 0
-        past[x] = font.render(games[p][1][0:30], 1, (255,255,255))
-        futr[x] = font.render(games[f][1][0:30], 1, (255,255,255))
+        past[x] = font.render(games[p][3][0:30], 1, (255,255,255))
+        futr[x] = font.render(games[f][3][0:30], 1, (255,255,255))
     if assests:
         loadAssests()
     
 def loadAssests():
     global audioClip, audioVolume, gameBigImg, gameImg
-    audioClip = systems[systemID][0] + "/" + games[gameID[systemID]][0] + ".mp3"
+    audioClip = "audio/" + systems[systemID]["info"][0] + "/" + games[gameID[systemID]][1] + ".mp3"
     try:
-        gameImg = pygame.image.load(systems[systemID][0] + "/" + games[gameID[systemID]][0] + ".png")
+        gameImg = pygame.image.load("media/" + systems[systemID]["info"][0] + "/Marquee/" + games[gameID[systemID]][1] + ".png")
     except:
         try:
-            gameImg = pygame.image.load(systems[systemID][0] + "/" + games[gameID[systemID]][0] + ".jpg")
+            gameImg = pygame.image.load("media/" + systems[systemID]["info"][0] + "/System_Logo/System_Logo.png")
         except:
             try:
-                gameImg = pygame.image.load(systems[systemID][0] + "/" + games[gameID[systemID]][0] + ".gif")
+                gameImg = pygame.image.load(systems[systemID]["info"][0] + "/" + games[gameID[systemID]][1] + ".gif")
             except:
-                #gameImg = pygame.image.load("blank.png")
-                gameImg = pygame.image.load(systems[systemID][0] + "/" + systems[systemID][2])
+                gameImg = pygame.image.load("assets/none.png")
     try:
-        gameBigImg = pygame.image.load(systems[systemID][0] + "/" + games[gameID[systemID]][0] + "-big.png")
+        gameBigImg = pygame.image.load("media/" + systems[systemID]["info"][0] + "/Snap/" + games[gameID[systemID]][1] + ".png")
     except:
         try:
-            gameBigImg = pygame.image.load(systems[systemID][0] + "/" + games[gameID[systemID]][0] + "-big.jpg")
+            gameBigImg = pygame.image.load("media/" + systems[systemID]["info"][0] + "/Box/" + games[gameID[systemID]][1] + ".png")
         except:
             try:
-                gameBigImg = pygame.image.load(systems[systemID][0] + "/" + games[gameID[systemID]][0] + "-big.gif")
+                gameBigImg = pygame.image.load(systems[systemID]["info"][0] + "/" + games[gameID[systemID]][1] + "-big.gif")
             except:
-                gameBigImg = pygame.image.load("none.png")
+                gameBigImg = pygame.image.load("assets/none.png")
     try:
         audioVolume = 0.01
         pygame.mixer.music.load(audioClip)
@@ -653,7 +683,7 @@ def loadAssests():
     except:
         print("error loading audio file", audioClip)
         audioVolume = 0
-        #pygame.mixer.music.load("blank.mp3")
+        #pygame.mixer.music.load("assets/blank.mp3")
 
 def drawMenu(type):
     if type == "wheel":
@@ -692,6 +722,7 @@ def fadeIn(step, max):
         pygame.mixer.music.set_volume(audioVolume)
         fadeStep = time.time()
         
+changeSystem(0)
 fillWheel(True) # fill wheel with games
 evtCount = 0
 resizeImages()
@@ -708,14 +739,14 @@ while True:
     event = pygame.event.poll()
     keyMap(event)
     procEvents()
-    
+
     if not animateDone:
         animateWheel(direction)
-    
+
     if(audioVolume!=0 and audioVolume!=audioMax):
         if(time.time()-fadeStep >= 0.1):
             fadeIn((audioMax/50), audioMax)
-    
+
     if(goodEvent):
         evtCount += 1
         resizeImages()
