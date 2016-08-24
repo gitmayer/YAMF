@@ -6,11 +6,15 @@ What's Working
 ---
 Menu system, animation and sound.  All visuals dependant on assests and comma seperated data files.
 
-Developement in Progress
----
-Asset scraping and ROM discovery
+Asset scraping (Use EmuMovies Sync to download media)
 
 Options menu for user settings
+
+Developement in Progress
+---
+Web page for more advanced options
+
+ROM scraping
 
 Links
 ---
