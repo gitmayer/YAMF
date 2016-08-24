@@ -25,16 +25,16 @@ sub-folders. Only tested audio codec was mp3.
 
 Available systems and games are loaded from comma 
 seperated text files that are created via the rom 
-scraper scripts. These files and scripts are accessible 
-via the web configuration utility
+scraper scripts. These files and scripts are accessed 
+via the web configuration utility.
 
 """
+# import dependancies
 try:
     from cStringIO import StringIO as BytesIO
 except ImportError:
     from io import BytesIO
 from pygame.locals import *
-
 import pygame, sys, os, time, csv
 from xml.dom import minidom
 
@@ -42,9 +42,8 @@ def debugPrint(msg):
     print(msg.replace("\n","",3))
     with open("debug.txt", 'a') as f:
         f.write(msg + "\n")
-#default settings
-settings = {"path":u"C:/SykoGame",
-            "resolution":"auto",
+# default settings
+settings = {"resolution":"auto",
             "width":0,
             "height":0,
             "volume":0.5,
@@ -52,9 +51,9 @@ settings = {"path":u"C:/SykoGame",
             "wheel":7,
             "debug":False}
             
-newpath = settings["path"]
-oldpath = os.getcwd()
-os.chdir(newpath)
+#newpath = u"C:/SykoGame"
+#oldpath = os.getcwd()
+#os.chdir(newpath)
 
 def xmlGet(xml, tag, type="value"):
     if(type=="child"):
