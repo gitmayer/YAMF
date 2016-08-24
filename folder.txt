@@ -1,0 +1,3 @@
+Picture media stored here.
+
+Use EmuMovies Sync to download material (Marquee, Box, Snap, & System_Logo)
