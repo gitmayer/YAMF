@@ -74,20 +74,7 @@ with open("games.csv", 'r') as gamesFile:
             if(system["info"][0]==row[0]):
                 system["games"].append(row)
                 if(system["games"][-1][4]==""):
-                    system["games"][-1][4]=system["games"][-1][3]
-        #games.append(row)
-
-# with open(systems[systemID]["info"]["info"][0] + "/games.csv", 'r') as gamesFile:
-    # reader = csv.reader(gamesFile, delimiter=',')
-    # for row in reader:
-        # if(childLock):
-            # if(len(row)==3):
-                # if(row[2]=="Kids"):
-                    # games.append(row)
-        # else:
-            # games.append(row)
-
-# print(games)            
+                    system["games"][-1][4]=system["games"][-1][3]           
             
 pygame.mixer.pre_init(44100, -16, 2, 2048)
 pygame.init()
@@ -234,8 +221,6 @@ def procEvents():
     if (goodEvent) and not keys[111]:
         if(pygame.mixer.music.get_busy()):
             pygame.mixer.music.stop()
-    #print event.key
-    #if evt.key == 113: # q key
     if keys[113]: # q key
         quitOut()
     elif keys[111]: # o key
@@ -348,7 +333,6 @@ def launchOptions():
     optionX = (windowWidth/2)-(optionWidth/2)
     optionY = (windowHeight/2)-(optionHeight/2)
     event = pygame.event.poll()
-    #inputEvent = procInput(event)
     keyMap(event)
     s = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
     s2 = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
@@ -380,7 +364,6 @@ def launchOptions():
     optionsOn = [option0On,option1On,option2On,option3On,option4On]
     optionsOff = [option0Off,option1Off,option2Off,option3Off,option4Off]
     selected = 0
-    #while not (inputEvent == "close"):
     while menuOpen:
         s3.blit(title, ((optionWidth/2)-title.get_rect().centerx,optionHeight*.04))
         for x in range(0,len(optionsOn)):
@@ -396,7 +379,6 @@ def launchOptions():
         pygame.display.update(optionX,optionY,optionWidth,optionHeight)
         fpsClock.tick(10)
         event = pygame.event.poll()
-        #inputEvent = procInput(event)
         keyMap(event)
         if(keys[K_DOWN]):
             selected = selected + 1
@@ -580,17 +562,6 @@ def changeSystem(dir):
             games.append(game)
     if(len(games)>1):
         games = sorted(games, key=lambda games: games[4].lower())
-        #print(games)
-    # with open(systems[systemID]["info"][0] + "/games.csv", 'r') as gamesFile:
-        # reader = csv.reader(gamesFile, delimiter=',')
-        # for row in reader:
-            # if(childLock):
-                # if(len(row)==3):
-                    # if(row[2]=="Kids"):
-                        # games.append(row)
-            # else:
-                # games.append(row)
-    #gameID = 0
     fillWheel(True)
 
 def changeGame(dir):
@@ -609,8 +580,6 @@ def changeGame(dir):
     oldMenuY = menuY
     direction = dir
     fpsClock.tick(15) #slow it down for key repeat
-    #animateWheel(dir)
-    #fillWheel()
 
 def animateWheel(dir):
     global menuY, animateDone
