@@ -16,6 +16,8 @@ Web page for more advanced options
 
 ROM scraping
 
+Add Joystick(s) input
+
 Links
 ---
 Python 2.7 (https://www.python.org/downloads/)
