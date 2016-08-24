@@ -6,11 +6,10 @@ try:
     from cStringIO import StringIO as BytesIO
 except ImportError:
     from io import BytesIO
+from pygame.locals import *
 
 import pygame, sys, os, time, csv
 from xml.dom import minidom
-from pygame.locals import *
-from operator import itemgetter
 
 def debugPrint(msg):
     print(msg.replace("\n","",3))
