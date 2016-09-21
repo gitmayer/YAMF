@@ -51,7 +51,7 @@ settings = {"resolution":"auto",
             "wheel":7,
             "debug":False}
             
-newpath = os.path.expanduser("~") + u"/YAMF"
+newpath = os.path.join(os.path.expanduser("~"),"YAMF")
 oldpath = os.getcwd()
 if(os.getcwd().split('/')[-1]!="YAMF"):
     os.chdir(newpath)
