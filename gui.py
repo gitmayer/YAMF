@@ -51,9 +51,10 @@ settings = {"resolution":"auto",
             "wheel":7,
             "debug":False}
             
-#newpath = u"C:/SykoGame"
-#oldpath = os.getcwd()
-#os.chdir(newpath)
+newpath = os.path.expanduser("~") + u"/YAMF"
+oldpath = os.getcwd()
+if(os.getcwd().split('/')[-1]!="YAMF"):
+    os.chdir(newpath)
 
 def xmlGet(xml, tag, type="value"):
     if(type=="child"):
