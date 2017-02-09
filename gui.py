@@ -120,6 +120,15 @@ past = [0 for x in range(0,wheelDepth)]
 futr = [0 for x in range(0,wheelDepth)]
 screen = pygame.display
 
+pygame.joystick.init()
+joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+debugPrint("Number of Joysticks attached: " + str(pygame.joystick.get_count()) + " (listed below)")
+j = 0
+for joystick in joysticks:
+    debugPrint("joysticks[" + str(j) + "] = " + joystick.get_name())
+    j += 1
+    joystick.init()
+
 FPS = 60
 fpsClock = pygame.time.Clock()
 goodEvent = False
@@ -204,13 +213,13 @@ def loadResolution():
     updateY = int(274/scaleY)
     updateDX = int((wheelCoverImg.get_rect().width-16))
     updateDY = int((wheelCoverImg.get_rect().height-24))
-    try:
+    try: # try to load new resolution
         screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
-    except:
-        windowHeight = info.current_h
+    except: # fallback to desktop resolution
+        windowHeight = info.current_h 
         windowWidth = info.current_w
         screen = pygame.display.set_mode((windowWidth,windowHeight),FULLSCREEN|DOUBLEBUF|HWSURFACE)
-    pygame.display.set_caption('Sykotic Gaming')
+    pygame.display.set_caption('YAMF')
 
 loadResolution()
 
@@ -252,18 +261,68 @@ def quitOut():
 def clearKeys():
     global keys
     for key in range(0,len(keys)):
-        keys[key] = False
+        keys[key] = 0
 
-def keyMap(evt):
-    global goodEvent, keys
-    goodEvent = False
-    if evt.type == KEYDOWN:
-        goodEvent = True
-        keys[evt.key] = True
-    elif evt.type == KEYUP:
-        keys[evt.key] = False
-    if evt.type == QUIT:
-        quitOut()
+def keyMap(evts):
+#   QUIT             none
+#   ACTIVEEVENT      gain, state
+#   KEYDOWN          unicode, key, mod
+#   KEYUP            key, mod
+#   MOUSEMOTION      pos, rel, buttons
+#   MOUSEBUTTONUP    pos, button
+#   MOUSEBUTTONDOWN  pos, button
+#   JOYAXISMOTION    joy, axis, value
+#   JOYBALLMOTION    joy, ball, rel
+#   JOYHATMOTION     joy, hat, value
+#   JOYBUTTONUP      joy, button
+#   JOYBUTTONDOWN    joy, button
+#   VIDEORESIZE      size, w, h
+#   VIDEOEXPOSE      none
+#   SEREVENT        code
+    #print(str(pygame.joystick.get_init()))
+    for evt in evts:
+        global goodEvent, keys
+        tick = time.clock()
+        goodEvent = False
+        if ((evt.type == JOYAXISMOTION) or (evt.type == JOYBUTTONDOWN) or (evt.type == KEYDOWN) or (evt.type == KEYUP)):
+            if evt.type == JOYAXISMOTION:
+                #print(evt.axis,evt.value)
+                if (evt.axis == 1): # Y Axis
+                    if (evt.value > .9 and evt.value < 1.1):
+                        goodEvent = True
+                        keys[K_UP] = 0
+                        keys[K_DOWN] = tick
+                    elif (evt.value > -1.1 and evt.value < -.9):
+                        goodEvent = True
+                        keys[K_UP] = tick
+                        keys[K_DOWN] = 0
+                    else:
+                        keys[K_UP] = 0
+                        keys[K_DOWN] = 0
+                elif (evt.axis == 0): # X Axis
+                    if (evt.value > .9 and evt.value < 1.1):
+                        goodEvent = True
+                        keys[K_RIGHT] = 0
+                        keys[K_LEFT] = tick
+                    elif (evt.value > -1.1 and evt.value < -.9):
+                        goodEvent = True
+                        keys[K_RIGHT] = tick
+                        keys[K_LEFT] = 0
+                    else:
+                        keys[K_RIGHT] = 0
+                        keys[K_LEFT] = 0
+            if evt.type == JOYBUTTONDOWN:
+                goodEvent = True
+                keys[evt.button] = tick
+            elif evt.type == JOYBUTTONUP:
+                keys[evt.button] = 0
+            if evt.type == KEYDOWN:
+                goodEvent = True
+                keys[evt.key] = tick
+            elif evt.type == KEYUP:
+                keys[evt.key] = 0
+        elif evt.type == QUIT:
+            quitOut()
     
 def procEvents():
     global keys
@@ -272,13 +331,19 @@ def procEvents():
             pygame.mixer.music.stop()
     if keys[113]: # q key
         quitOut()
-    elif keys[111]: # o key
+    elif keys[111] or keys[8]: # o key or joystick button 8
         launchOptions()
     if keys[K_UP] or keys[K_DOWN]:
         if keys[K_UP]:
-            changeGame(-1)
+            if(time.clock() - keys[K_UP] > 1.6):
+                changeGame(-3)
+            else:
+                changeGame(-1)
         else:
-            changeGame(1)
+            if(time.clock() - keys[K_DOWN] > 1.6):
+                changeGame(3)
+            else:
+                changeGame(1)
     elif keys[K_LEFT] or keys[K_RIGHT]:
         if keys[K_LEFT]:
             changeSystem(-1)
@@ -380,7 +445,8 @@ def launchOptions():
     optionHeight = updateDY
     optionX = (windowWidth/2)-(optionWidth/2)
     optionY = (windowHeight/2)-(optionHeight/2)
-    event = pygame.event.poll()
+    #event = pygame.event.poll()
+    event = pygame.event.get()
     keyMap(event)
     s = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
     s2 = pygame.Surface((optionWidth, optionHeight), flags=pygame.SRCALPHA)
@@ -426,7 +492,8 @@ def launchOptions():
         screen.blit(s3, (optionX,optionY))
         pygame.display.update(optionX,optionY,optionWidth,optionHeight)
         fpsClock.tick(8)
-        event = pygame.event.poll()
+        #event = pygame.event.poll()
+        event = pygame.event.get()
         keyMap(event)
         if(keys[K_DOWN]):
             selected = selected + 1
@@ -439,9 +506,17 @@ def launchOptions():
         elif(keys[K_LEFT] or keys[K_RIGHT]):
             if(selected==0): #volume
                 if(keys[K_LEFT]):
-                    audioMax = audioMax - 0.01
+                    if(time.clock() - keys[K_LEFT] > 0.8):
+                        audioMax = audioMax - 0.05
+                    else:
+                        audioMax = audioMax - 0.01
                 else:
-                    audioMax = audioMax + 0.01
+                    if(time.clock() - keys[K_RIGHT] > 0.8):
+                        audioMax = audioMax + 0.05
+                    else:
+                        audioMax = audioMax + 0.01
+                if(audioMax < 0): audioMax = 0
+                if(audioMax > 1): audioMax = 1
                 audioVolume = audioMax
                 pygame.mixer.music.set_volume(audioVolume)
             elif(selected==1): #resolution
@@ -465,10 +540,11 @@ def launchOptions():
                     debug = True
                 if keys[K_RIGHT]:
                     debug = False
-        elif keys[111] or (keys[K_RETURN] and (selected==(len(optionsOn)-1))):
+        elif keys[111] or keys[8] or (keys[K_RETURN] and (selected==(len(optionsOn)-1))):
             menuOpen = False
-            keys[111] = False
-            keys[K_RETURN] = False
+            keys[111] = 0
+            keys[8] = 0
+            keys[K_RETURN] = 0
         
     pygame.event.clear()
     settings["resolution"] = resolutions[resolution]
@@ -665,7 +741,8 @@ while True:
             actualFPS = int((actualFPS + (60/((timeStop - timeStart)/0.016666667)))/2)
         timeStart = time.time()
     
-    event = pygame.event.poll()
+    #event = pygame.event.poll()
+    event = pygame.event.get()
     keyMap(event)
     procEvents()
 
