@@ -10,13 +10,13 @@ Asset scraping (Use EmuMovies Sync to download media)
 
 Options menu for user settings
 
+Joystick input added
+
 Developement in Progress
 ---
 Web page for more advanced options
 
 ROM scraping
-
-Add Joystick(s) input
 
 Links
 ---
