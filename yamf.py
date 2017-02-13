@@ -35,7 +35,7 @@ try:
 except ImportError:
     from io import BytesIO
 from pygame.locals import *
-import pygame, sys, os, time, csv
+import pygame, sys, os, time, csv, subprocess
 from xml.dom import minidom
 
 def debugPrint(msg):
@@ -108,8 +108,8 @@ with open("games.csv", 'r') as gamesFile:
                 system["games"].append(row)
                 if(system["games"][-1][4]==""):
                     system["games"][-1][4]=system["games"][-1][3]           
-            
-pygame.mixer.pre_init(44100, -16, 2, 2048)
+
+pygame.mixer.pre_init(44100, -16, 2, 4096)
 pygame.init()
 pygame.mixer.init()
 audioClip = ""
@@ -120,9 +120,16 @@ past = [0 for x in range(0,wheelDepth)]
 futr = [0 for x in range(0,wheelDepth)]
 screen = pygame.display
 
+J_UP = 85
+J_DOWN = 68
+J_LEFT = 76
+J_RIGHT = 82
 pygame.joystick.init()
 joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
-debugPrint("Number of Joysticks attached: " + str(pygame.joystick.get_count()) + " (listed below)")
+if pygame.joystick.get_count() > 0:
+    debugPrint("Number of Joysticks attached: " + str(pygame.joystick.get_count()) + " (listed below)")
+else:
+    debugPrint("No Joysticks attached")
 j = 0
 for joystick in joysticks:
     debugPrint("joysticks[" + str(j) + "] = " + joystick.get_name())
@@ -262,6 +269,8 @@ def clearKeys():
     global keys
     for key in range(0,len(keys)):
         keys[key] = 0
+    #for key in keys:
+     #   key = 0
 
 def keyMap(evts):
 #   QUIT             none
@@ -288,29 +297,33 @@ def keyMap(evts):
             if evt.type == JOYAXISMOTION:
                 #print(evt.axis,evt.value)
                 if (evt.axis == 1): # Y Axis
-                    if (evt.value > .9 and evt.value < 1.1):
-                        goodEvent = True
-                        keys[K_UP] = 0
-                        keys[K_DOWN] = tick
-                    elif (evt.value > -1.1 and evt.value < -.9):
-                        goodEvent = True
-                        keys[K_UP] = tick
-                        keys[K_DOWN] = 0
+                    if (evt.value > .9):
+                        keys[J_UP] = 0
+                        if keys[J_DOWN] == 0:
+                            keys[J_DOWN] = tick
+                            goodEvent = True
+                    elif (evt.value < -.9):
+                        if keys[J_UP] == 0:
+                            keys[J_UP] = tick
+                            goodEvent = True
+                        keys[J_DOWN] = 0
                     else:
-                        keys[K_UP] = 0
-                        keys[K_DOWN] = 0
+                        keys[J_DOWN] = 0
+                        keys[J_UP] = 0
                 elif (evt.axis == 0): # X Axis
-                    if (evt.value > .9 and evt.value < 1.1):
-                        goodEvent = True
-                        keys[K_RIGHT] = 0
-                        keys[K_LEFT] = tick
-                    elif (evt.value > -1.1 and evt.value < -.9):
-                        goodEvent = True
-                        keys[K_RIGHT] = tick
-                        keys[K_LEFT] = 0
+                    if (evt.value > .9):
+                        if keys[J_RIGHT] == 0:
+                            keys[J_RIGHT] = tick
+                            goodEvent = True
+                        keys[J_LEFT] = 0
+                    elif (evt.value < -.9):
+                        keys[J_RIGHT] = 0
+                        if keys[J_LEFT] == 0:
+                            keys[J_LEFT] = tick
+                            goodEvent = True
                     else:
-                        keys[K_RIGHT] = 0
-                        keys[K_LEFT] = 0
+                        keys[J_RIGHT] = 0
+                        keys[J_LEFT] = 0
             if evt.type == JOYBUTTONDOWN:
                 goodEvent = True
                 keys[evt.button] = tick
@@ -326,21 +339,32 @@ def keyMap(evts):
     
 def procEvents():
     global keys
-    if (goodEvent) and not keys[111]: # o key
+    if (goodEvent) and not (keys[111] or keys[8]): # o key or joystick button 9
         if(pygame.mixer.music.get_busy()):
             pygame.mixer.music.stop()
-    if keys[113]: # q key
+    if keys[113] or (keys[6] and keys[7]): # q key
         quitOut()
-    elif keys[111] or keys[8]: # o key or joystick button 8
+    elif keys[111] or keys[8]: # o key or joystick button 9
         launchOptions()
     if keys[K_UP] or keys[K_DOWN]:
         if keys[K_UP]:
-            if(time.clock() - keys[K_UP] > 1.6):
+            if (time.clock() - keys[K_UP] > 1.6):
                 changeGame(-3)
             else:
                 changeGame(-1)
-        else:
-            if(time.clock() - keys[K_DOWN] > 1.6):
+        if keys[K_DOWN]:
+            if (time.clock() - keys[K_DOWN] > 1.6):
+                changeGame(3)
+            else:
+                changeGame(1)
+    if keys[J_UP] or keys[J_DOWN]:
+        if keys[J_UP]:
+            if (time.clock() - keys[J_UP] > 1.6):
+                changeGame(-3)
+            else:
+                changeGame(-1)
+        if keys[J_DOWN]:
+            if (time.clock() - keys[J_DOWN] > 1.6):
                 changeGame(3)
             else:
                 changeGame(1)
@@ -349,8 +373,8 @@ def procEvents():
             changeSystem(-1)
         else:
             changeSystem(1)
-        keys[K_LEFT] = False
-        keys[K_RIGHT] = False
+        keys[K_LEFT] = 0
+        keys[K_RIGHT] = 0
     if keys[K_RETURN]:
         launchGame()
 
@@ -563,7 +587,8 @@ def launchGame():
         timeStart = time.time()
     pygame.event.set_grab(False)
     screen = pygame.display.set_mode((0,0),NOFRAME) # hide my screen
-    os.popen(systems[systemID]["info"][1] + games[gameID[systemID]][1]) # launch game
+    #os.popen(systems[systemID]["info"][1] + games[gameID[systemID]][1]) # launch game
+    subprocess.call(systems[systemID]["info"][1] + games[gameID[systemID]][1]) # launch game
     #pygame.event.pump() #tell event that "you're still here"
     if(debug):
         timeStop = time.time()
@@ -685,7 +710,7 @@ def loadAssests():
         pygame.mixer.music.set_volume(audioVolume)
         pygame.mixer.music.play(1) # (3) to play 3 times
     except:
-        print("error loading audio file", audioClip)
+        #print("error loading audio file", audioClip)
         audioVolume = 0
         #pygame.mixer.music.load("assets/blank.mp3")
 
