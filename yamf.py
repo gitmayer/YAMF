@@ -127,12 +127,15 @@ J_RIGHT = 82
 pygame.joystick.init()
 joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
 if pygame.joystick.get_count() > 0:
-    debugPrint("Number of Joysticks attached: " + str(pygame.joystick.get_count()) + " (listed below)")
+    if(debug):
+        debugPrint("Number of Joysticks attached: " + str(pygame.joystick.get_count()) + " (listed below)")
 else:
-    debugPrint("No Joysticks attached")
+    if(debug):
+        debugPrint("No Joysticks attached")
 j = 0
 for joystick in joysticks:
-    debugPrint("joysticks[" + str(j) + "] = " + joystick.get_name())
+    if(debug):
+        debugPrint("joysticks[" + str(j) + "] = " + joystick.get_name())
     j += 1
     joystick.init()
 
@@ -163,8 +166,8 @@ def loadResolution():
     imgBigX = 569
     imgBigY = 673
     menuSpacing = font.get_linesize() + 10
-    bgImg = pygame.image.load("assets/bg.png")
-    fgImg = pygame.image.load("assets/fg.png")
+    bgImg = pygame.image.load("assets/bg2.png")
+    fgImg = pygame.image.load("assets/fg2.png")
     gameImg = pygame.image.load("assets/blank.png")
     gameBigImg = pygame.image.load("assets/blank.png")
     wheelCoverImg = pygame.image.load("assets/wheel.png")
@@ -245,13 +248,13 @@ def resizeImages():
     width = 854/scaleX
     bigHeight = 569/scaleY
     bigWidth = 854/scaleX
-    if((float(gameImg.get_rect().height)/gameImg.get_rect().width) > (height/width)): #too tall
+    if((float(gameImg.get_rect().height)/gameImg.get_rect().width) < (height/width)): #too tall
         calcHeight = ((gameImg.get_rect().height * width)/(gameImg.get_rect().width))
         gameImg = pygame.transform.scale(gameImg, (int(width), int(calcHeight)))
     else: #too wide
         calcWidth = ((gameImg.get_rect().width * height/gameImg.get_rect().height))
         gameImg = pygame.transform.scale(gameImg, (int(calcWidth), int(height)))
-    if((float(gameBigImg.get_rect().height)/gameBigImg.get_rect().width) > (float(bigHeight)/bigWidth)): #too tall
+    if((float(gameBigImg.get_rect().height)/gameBigImg.get_rect().width) < (float(bigHeight)/bigWidth)): #too tall
         calcHeight = ((gameBigImg.get_rect().height * bigWidth)/(gameBigImg.get_rect().width))
         gameBigImg = pygame.transform.scale(gameBigImg, (int(bigWidth), int(calcHeight)))
     else: #too wide
@@ -326,7 +329,7 @@ def keyMap(evts):
                         keys[J_LEFT] = 0
             if evt.type == JOYBUTTONDOWN:
                 goodEvent = True
-                keys[evt.button] = tick
+                keys[evt.button + 1] = tick
             elif evt.type == JOYBUTTONUP:
                 keys[evt.button] = 0
             if evt.type == KEYDOWN:
@@ -339,13 +342,15 @@ def keyMap(evts):
     
 def procEvents():
     global keys
-    if (goodEvent) and not (keys[111] or keys[8]): # o key or joystick button 9
+    if (goodEvent) and not (keys[111] or keys[8]): # 'o' key or joystick button 9
         if(pygame.mixer.music.get_busy()):
             pygame.mixer.music.stop()
-    if keys[113] or (keys[6] and keys[7]): # q key
+    if keys[113] or (keys[10] and keys[16]): # 'q' key
         quitOut()
-    elif keys[111] or keys[8]: # o key or joystick button 9
+    elif keys[111] or keys[8]: # 'o' key or joystick button 9
         launchOptions()
+    elif keys[K_SPACE] or keys[1]:
+        launchGame()
     if keys[K_UP] or keys[K_DOWN]:
         if keys[K_UP]:
             if (time.clock() - keys[K_UP] > 1.6):
@@ -357,6 +362,13 @@ def procEvents():
                 changeGame(3)
             else:
                 changeGame(1)
+    elif keys[K_LEFT] or keys[K_RIGHT]:
+        if keys[K_LEFT]:
+            changeSystem(-1)
+        else:
+            changeSystem(1)
+        keys[K_LEFT] = 0
+        keys[K_RIGHT] = 0
     if keys[J_UP] or keys[J_DOWN]:
         if keys[J_UP]:
             if (time.clock() - keys[J_UP] > 1.6):
@@ -368,15 +380,13 @@ def procEvents():
                 changeGame(3)
             else:
                 changeGame(1)
-    elif keys[K_LEFT] or keys[K_RIGHT]:
-        if keys[K_LEFT]:
+    elif keys[J_LEFT] or keys[J_RIGHT]:
+        if keys[J_LEFT]:
             changeSystem(-1)
         else:
             changeSystem(1)
-        keys[K_LEFT] = 0
-        keys[K_RIGHT] = 0
-    if keys[K_RETURN]:
-        launchGame()
+        keys[J_LEFT] = 0
+        keys[J_RIGHT] = 0
 
 def launchOptions():
     global audioMax, audioVolume, childLock, debug, windowWidth, windowHeight
@@ -515,56 +525,76 @@ def launchOptions():
         debugOption()
         screen.blit(s3, (optionX,optionY))
         pygame.display.update(optionX,optionY,optionWidth,optionHeight)
-        fpsClock.tick(8)
+        fpsClock.tick(15)
         #event = pygame.event.poll()
         event = pygame.event.get()
         keyMap(event)
-        if(keys[K_DOWN]):
+        if(keys[K_DOWN] or keys[J_DOWN]):
             selected = selected + 1
             if(selected>len(optionsOn)-1):
                 selected = 0
-        elif(keys[K_UP]):
+            if(keys[K_DOWN]):
+                keys[K_DOWN] = 0
+            else:
+                keys[J_DOWN] = 0
+        elif(keys[K_UP] or keys[J_UP]):
             selected = selected - 1
             if(selected<0):
                 selected = len(optionsOn)-1
-        elif(keys[K_LEFT] or keys[K_RIGHT]):
+            if(keys[K_UP]):
+                keys[K_UP] = 0
+            else:
+                keys[J_UP] = 0
+        elif(keys[K_LEFT] or keys[K_RIGHT] or keys[J_LEFT] or keys[J_RIGHT]):
             if(selected==0): #volume
-                if(keys[K_LEFT]):
-                    if(time.clock() - keys[K_LEFT] > 0.8):
-                        audioMax = audioMax - 0.05
+                if(keys[K_LEFT] or keys[K_RIGHT]):
+                    if(keys[K_LEFT]):
+                        if(time.clock() - keys[K_LEFT] > 0.6):
+                            audioMax = audioMax - 0.04
+                        else:
+                            audioMax = audioMax - 0.01
                     else:
-                        audioMax = audioMax - 0.01
-                else:
-                    if(time.clock() - keys[K_RIGHT] > 0.8):
-                        audioMax = audioMax + 0.05
+                        if(time.clock() - keys[K_RIGHT] > 0.6):
+                            audioMax = audioMax + 0.04
+                        else:
+                            audioMax = audioMax + 0.01
+                if(keys[J_LEFT] or keys[J_RIGHT]):
+                    if(keys[J_LEFT]):
+                        if(time.clock() - keys[J_LEFT] > 0.6):
+                            audioMax = audioMax - 0.04
+                        else:
+                            audioMax = audioMax - 0.01
                     else:
-                        audioMax = audioMax + 0.01
+                        if(time.clock() - keys[J_RIGHT] > 0.6):
+                            audioMax = audioMax + 0.04
+                        else:
+                            audioMax = audioMax + 0.01
                 if(audioMax < 0): audioMax = 0
                 if(audioMax > 1): audioMax = 1
                 audioVolume = audioMax
                 pygame.mixer.music.set_volume(audioVolume)
             elif(selected==1): #resolution
                 resChanged = True
-                if(keys[K_RIGHT]):
+                if(keys[K_RIGHT] or keys[J_RIGHT]):
                     resolution = resolution + 1
                     if(resolution>len(resolutions)-1):
                         resolution = 0
-                else:
+                elif(keys[K_LEFT] or keys[J_LEFT]):
                     resolution = resolution - 1
                     if(resolution<0):
                         resolution = len(resolutions)-1
             elif(selected==2): #kids mode
                 kidChanged = True
-                if keys[K_LEFT]:
+                if(keys[K_LEFT] or keys[J_LEFT]):
                     childLock = True
-                if keys[K_RIGHT]:
+                elif(keys[K_RIGHT] or keys[J_RIGHT]):
                     childLock = False
             elif(selected==3): #debug mode
-                if keys[K_LEFT]:
+                if(keys[K_LEFT] or keys[J_LEFT]):
                     debug = True
-                if keys[K_RIGHT]:
+                elif(keys[K_RIGHT] or keys[J_RIGHT]):
                     debug = False
-        elif keys[111] or keys[8] or (keys[K_RETURN] and (selected==(len(optionsOn)-1))):
+        elif keys[111] or keys[8] or ((keys[K_SPACE] or keys[1]) and (selected==(len(optionsOn)-1))):
             menuOpen = False
             keys[111] = 0
             keys[8] = 0
@@ -587,8 +617,8 @@ def launchGame():
         timeStart = time.time()
     pygame.event.set_grab(False)
     screen = pygame.display.set_mode((0,0),NOFRAME) # hide my screen
-    #os.popen(systems[systemID]["info"][1] + games[gameID[systemID]][1]) # launch game
-    subprocess.call(systems[systemID]["info"][1] + games[gameID[systemID]][1]) # launch game
+    os.popen(systems[systemID]["info"][1] + games[gameID[systemID]][1]) # launch game
+    #subprocess.call(systems[systemID]["info"][1] + games[gameID[systemID]][1]) # launch game
     #pygame.event.pump() #tell event that "you're still here"
     if(debug):
         timeStop = time.time()
@@ -624,7 +654,7 @@ def changeSystem(dir):
 
 def changeGame(dir):
     global gameID, animateDone, direction, menuY, oldMenuY, repeatTime
-    if((time.time()-repeatTime)>=0.15):
+    if((time.time()-repeatTime)>=0.15 or (dir==3 or dir==-3)):
         if not animateDone:
             menuY = oldMenuY #reset center
             fillWheel() #load the last selection before more animation
@@ -727,6 +757,8 @@ def drawScreen():
     screen.fill((50,50,50))
     screen.blit(bgImg, (0,0))
     screen.blit(gameBigImg, (imgBigX-(gameBigImg.get_rect().centerx),(imgBigY-(gameBigImg.get_rect().centery))))
+    #screen.blit(gameImg, (imgX-(gameImg.get_rect().centerx),imgY-(gameImg.get_rect().centery)))
+    #screen.blit(gameBigImg, (imgBigX-(gameBigImg.get_rect().centerx),(imgBigY-(gameBigImg.get_rect().centery))),(0,0,640,480))
     screen.blit(gameImg, (imgX-(gameImg.get_rect().centerx),imgY-(gameImg.get_rect().centery)))
     
     #wheel
