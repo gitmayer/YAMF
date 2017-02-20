@@ -342,12 +342,12 @@ def keyMap(evts):
     
 def procEvents():
     global keys
-    if (goodEvent) and not (keys[111] or keys[8]): # 'o' key or joystick button 9
+    if (goodEvent) and not (keys[111] or keys[8]): # 'o' key or joystick button 8
         if(pygame.mixer.music.get_busy()):
             pygame.mixer.music.stop()
-    if keys[113] or (keys[10] and keys[16]): # 'q' key
+    if keys[113] or (keys[10] and keys[16]): # 'q' key or joystick P1 coin and P2 coin
         quitOut()
-    elif keys[111] or keys[8]: # 'o' key or joystick button 9
+    elif keys[111] or keys[8]: # 'o' key or joystick button 8
         launchOptions()
     elif keys[K_SPACE] or keys[1]:
         launchGame()
